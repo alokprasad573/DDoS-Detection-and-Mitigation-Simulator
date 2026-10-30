@@ -1,0 +1,47 @@
+# ==============================================================================
+# Render Blueprint Specification for SENTRIX Backend
+# Architecture:
+#   - Backend: Render Web Service (FastAPI + ML Detection Engine)
+#   - Database: Supabase Managed PostgreSQL (via DATABASE_URL)
+#   - Frontend: Vercel (Next.js 16 Web Dashboard - deployed separately on Vercel)
+# ==============================================================================
+
+services:
+  # ---------------------------------------------------------------------------
+  # SENTRIX Backend Control Plane (FastAPI + ML Detection & Mitigation Engine)
+  # ---------------------------------------------------------------------------
+  - type: web
+    name: sentrix-backend
+    runtime: python
+    plan: free
+    region: oregon
+    branch: main
+    rootDir: .
+    buildCommand: pip install --upgrade pip setuptools wheel && pip install -e backend
+    startCommand: python -m alembic -c backend/alembic.ini upgrade head && uvicorn app.main:app --host 0.0.0.0 --port $PORT --app-dir backend --workers 1 --proxy-headers
+    healthCheckPath: /healthz
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.11.9"
+      - key: APP_ENV
+        value: production
+      - key: MITIGATION_MODE
+        value: simulation
+      - key: MODEL_PATH
+        value: models/approved_model.joblib
+      # Supabase PostgreSQL Connection String:
+      # Paste your Supabase URI from Supabase Project Settings -> Database -> Connection String
+      # Example: postgresql+psycopg2://postgres.[project-ref]:[password]@aws-0-[region].pooler.supabase.com:6543/postgres?sslmode=require
+      - key: DATABASE_URL
+        sync: false
+      - key: API_AUTH_REQUIRED
+        value: "true"
+      # Auto-generated secure token for API authentication between Vercel and Render
+      - key: API_AUTH_TOKEN
+        generateValue: true
+      # Secret key used for Supabase anti-pausing keepalive pings (/internal/keepalive)
+      - key: KEEPALIVE_SECRET
+        generateValue: true
+      # Allowed frontend origins. Vercel *.vercel.app is also supported natively via regex in backend/app/main.py
+      - key: CORS_ORIGINS
+        value: true

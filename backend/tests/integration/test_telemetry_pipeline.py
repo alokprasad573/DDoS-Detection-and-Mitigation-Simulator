@@ -13,13 +13,11 @@ from __future__ import annotations
 import time
 
 import pytest
-from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 from app.core.config import get_settings
 from app.features.telemetry_aggregator import (
     TelemetryWindowAggregator,
-    telemetry_aggregator,
 )
 from app.ingestion.log_parser import (
     anonymize_ip,
@@ -27,7 +25,6 @@ from app.ingestion.log_parser import (
     parse_access_logs,
 )
 from app.ingestion.telemetry_schemas import RequestTelemetryItem
-from app.integrations.middleware import SentrixTelemetryMiddleware
 from app.main import create_app
 
 # ---------------------------------------------------------------------------
@@ -445,85 +442,11 @@ def test_telemetry_ingress_and_summary_flow(monkeypatch) -> None:
         assert summary_data["client_metrics"]["unique_clients"] >= 1
         assert len(summary_data["top_uris"]) >= 2
 
-        # 4. NetFlow /traffic/summary should also reflect the live observations
+        # 4. NetFlow /traffic/summary route removed, must return 404
         resp_traffic = client.get("/api/v1/traffic/summary", headers=headers)
-        assert resp_traffic.status_code == 200
-        traffic_data = resp_traffic.json()
-        assert traffic_data["observation_count"] >= 3
+        assert resp_traffic.status_code == 404
 
 
 # ---------------------------------------------------------------------------
 # 4. Middleware Integration Test
 # ---------------------------------------------------------------------------
-
-
-def test_sentrix_telemetry_middleware_in_process() -> None:
-    """Verifies SentrixTelemetryMiddleware captures application traffic in-process."""
-    test_app = FastAPI()
-    test_app.add_middleware(
-        SentrixTelemetryMiddleware,
-        sentrix_endpoint="in-process",
-        anonymize_ips=True,
-    )
-
-    @test_app.get("/api/data")
-    def get_data() -> dict[str, str]:
-        return {"data": "ok"}
-
-    @test_app.get("/health")
-    def health() -> dict[str, str]:
-        return {"status": "ok"}
-
-    telemetry_aggregator.reset()
-
-    with TestClient(test_app) as client:
-        # Request to monitored route
-        client.get("/api/data", headers={"X-Forwarded-For": "203.0.113.88"})
-        # Request to excluded route
-        client.get("/health")
-
-    # Verify monitored route was recorded in aggregator
-    summary = telemetry_aggregator.get_summary()
-    assert summary.total_requests == 1
-    assert summary.top_uris[0].uri == "/api/data"
-    # Anonymized client IP: 203.0.113.88 -> 203.0.113.0
-    assert summary.client_metrics.unique_clients == 1
-
-
-def test_top_clients_calculation() -> None:
-    """Verifies that TelemetryWindowAggregator accurately tallies and ranks top client IPs."""
-    agg = TelemetryWindowAggregator(window_duration_seconds=30.0)
-    now = time.time()
-
-    items = [
-        RequestTelemetryItem(
-            timestamp=str(now),
-            client_ip="198.51.100.10",
-            method="GET",
-            uri="/test",
-            status_code=200,
-            latency_ms=10.0,
-        )
-        for _ in range(70)
-    ] + [
-        RequestTelemetryItem(
-            timestamp=str(now),
-            client_ip="198.51.100.20",
-            method="GET",
-            uri="/test",
-            status_code=200,
-            latency_ms=10.0,
-        )
-        for _ in range(30)
-    ]
-
-    agg.add_items(items)
-    summary = agg.get_summary(current_timestamp=now)
-
-    assert len(summary.top_clients) == 2
-    assert summary.top_clients[0].client_ip == "198.51.100.10"
-    assert summary.top_clients[0].count == 70
-    assert summary.top_clients[0].pct == 70.0
-    assert summary.top_clients[1].client_ip == "198.51.100.20"
-    assert summary.top_clients[1].count == 30
-    assert summary.top_clients[1].pct == 30.0

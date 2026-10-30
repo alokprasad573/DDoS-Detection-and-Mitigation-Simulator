@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useState, useSyncExternalStore, type ReactNode } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -18,24 +18,21 @@ interface AppShellProps {
   children: ReactNode;
 }
 
+const emptySubscribe = () => () => {};
+
 export function AppShell({ children }: AppShellProps) {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [collapsed, setCollapsed] = useState(false);
-  const [mounted, setMounted] = useState(false);
-
-  // Restore sidebar state from localStorage on mount
-  useEffect(() => {
-    setMounted(true);
+  const mounted = useSyncExternalStore(emptySubscribe, () => true, () => false);
+  const [collapsed, setCollapsed] = useState(() => {
+    if (typeof window === "undefined") return false;
     try {
       const saved = localStorage.getItem("sentrix_sidebar_collapsed");
-      if (saved !== null) {
-        setCollapsed(saved === "true");
-      }
+      return saved === "true";
     } catch {
-      // localStorage may fail in restricted browser contexts
+      return false;
     }
-  }, []);
+  });
 
   const toggleCollapsed = () => {
     setCollapsed((prev) => {
@@ -78,14 +75,9 @@ export function AppShell({ children }: AppShellProps) {
   const isShieldActive = Boolean(shieldStatus?.shield_active);
   const remainingSec = shieldStatus?.latest_mitigation?.remaining_seconds ?? 0;
 
-  // Determine active route (handling legacy aliases)
+  // Determine active route
   const isRouteActive = (routeHref: string) => {
-    if (pathname === routeHref) return true;
-    if (routeHref === "/traffic" && pathname === "/telemetry") return true;
-    if (routeHref === "/detection" && (pathname === "/threats" || pathname === "/alerts")) return true;
-    if (routeHref === "/protection" && pathname === "/mitigation") return true;
-    if (routeHref === "/health" && pathname === "/history") return true;
-    return false;
+    return pathname === routeHref;
   };
 
   const sidebarWidth = mounted && collapsed ? "4.75rem" : "16.25rem";

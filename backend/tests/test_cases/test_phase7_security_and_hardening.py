@@ -82,8 +82,11 @@ def clean_safety_state() -> Generator[None, None, None]:
 # -----------------------------------------------------------------------------
 
 
-def test_hardening_configuration_defaults_and_secret_masking() -> None:
+def test_hardening_configuration_defaults_and_secret_masking(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     """Verify production-safe default settings and SecretStr protection."""
+    monkeypatch.delenv("DATABASE_URL", raising=False)
     settings = Settings(_env_file=None)
 
     # 1. Defaults must be strictly safe
@@ -114,7 +117,7 @@ def test_hardening_configuration_defaults_and_secret_masking() -> None:
 def test_hardening_error_envelope_sanitization(client: TestClient) -> None:
     """Verify API error responses use standard error envelopes and never leak internal stack traces."""
     # 1. Invalid payload to traffic ingestion endpoint
-    resp = client.post("/api/v1/traffic/flows", json={"malformed": "data"})
+    resp = client.post("/api/v1/detection/analyze", json={"malformed": "data"})
     assert resp.status_code == 422
     data = resp.json()
 

@@ -117,26 +117,6 @@ export function DefensiveRulesCard() {
     }
   };
 
-  const handleExportAwsWaf = async () => {
-    try {
-      await api.downloadAwsWafConfig();
-      setActionMsg("Downloaded sentrix_aws_wafv2.json successfully.");
-      setTimeout(() => setActionMsg(null), 3500);
-    } catch (error) {
-      setActionMsg(error instanceof Error ? error.message : "AWS WAF export failed");
-    }
-  };
-
-  const handleExportAwsCli = async () => {
-    try {
-      await api.downloadAwsWafCli();
-      setActionMsg("Downloaded sentrix_aws_waf_deploy.sh successfully.");
-      setTimeout(() => setActionMsg(null), 3500);
-    } catch (error) {
-      setActionMsg(error instanceof Error ? error.message : "AWS WAF CLI export failed");
-    }
-  };
-
   return (
     <Card>
       <CardHeader>
@@ -201,24 +181,6 @@ export function DefensiveRulesCard() {
               >
                 <Download className="w-3.5 h-3.5 mr-1 text-[#06B6D4]" />
                 Export Caddyfile
-              </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={handleExportAwsWaf}
-                className="text-xs font-mono"
-              >
-                <Download className="w-3.5 h-3.5 mr-1 text-[#F59E0B]" />
-                Export AWS WAFv2
-              </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={handleExportAwsCli}
-                className="text-xs font-mono"
-              >
-                <Download className="w-3.5 h-3.5 mr-1 text-[#EC4899]" />
-                Export AWS CLI (.sh)
               </Button>
             </div>
           </div>

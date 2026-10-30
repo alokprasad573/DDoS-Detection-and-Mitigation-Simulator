@@ -112,11 +112,15 @@ def evaluate_live_detection(
             for a in recent_alerts
         )
         if not already_alerted:
-            severity_str = (
-                "critical"
-                if result.severity.value in ("HIGH", "CRITICAL")
-                else "warning"
-            )
+            raw_sev = result.severity.value.lower()
+            if raw_sev == "critical":
+                severity_str = "critical"
+            elif raw_sev in ("high", "warning"):
+                severity_str = "high"
+            elif raw_sev == "medium":
+                severity_str = "medium"
+            else:
+                severity_str = "low"
             alert = alert_repo.create(
                 detection_id=None,
                 severity=severity_str,

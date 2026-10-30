@@ -32,7 +32,7 @@ import { formatISTTime } from "@/lib/formatters";
 import { usePolling } from "@/lib/polling";
 
 export default function DetectionPage() {
-  const [windowSec, setWindowSec] = useState<number>(10);
+  const windowSec = 10;
   const [proposingRule, setProposingRule] = useState(false);
   const [actionMessage, setActionMessage] = useState<string | null>(null);
   const [severityFilter, setSeverityFilter] = useState<string>("all");
@@ -52,7 +52,7 @@ export default function DetectionPage() {
   // Poll persisted alerts
   const fetchAlerts = useCallback(() => {
     return api.getAlerts({
-      limit: 50,
+      limit: 100,
       severity: severityFilter === "all" ? undefined : severityFilter,
       target_ip: searchIp.trim() ? searchIp.trim() : undefined,
     });
@@ -142,6 +142,10 @@ export default function DetectionPage() {
   const criticalCount = alerts.filter((a) => a.severity.toLowerCase() === "critical").length;
   const highCount = alerts.filter(
     (a) => a.severity.toLowerCase() === "high" || a.severity.toLowerCase() === "warning"
+  ).length;
+  const mediumCount = alerts.filter((a) => a.severity.toLowerCase() === "medium").length;
+  const lowCount = alerts.filter(
+    (a) => a.severity.toLowerCase() === "low" || a.severity.toLowerCase() === "info"
   ).length;
 
   const statusType = isDisconnected
@@ -285,29 +289,30 @@ export default function DetectionPage() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <MetricCard
           title="Total Incidents Recorded"
-          value={alerts.length}
+          value={alertsData?.total_count ?? alerts.length}
           subtitle="Events stored in audit database"
           icon={<AlertTriangle className="w-5 h-5 text-[#00FF9D]" />}
         />
         <MetricCard
-          title="Critical Attacks"
+          title="Critical Severity"
           value={criticalCount}
           subtitle="High-impact flood or resource drain"
-          icon={<AlertTriangle className="w-5 h-5 text-[#FF0055]" />}
-          badge={<Badge variant={criticalCount > 0 ? "critical" : "normal"}>{criticalCount > 0 ? "Action Needed" : "Zero"}</Badge>}
+          icon={<AlertTriangle className="w-5 h-5 text-red-400" />}
+          badge={<Badge variant={criticalCount > 0 ? "critical" : "low"}>{criticalCount > 0 ? "Critical" : "Zero"}</Badge>}
         />
         <MetricCard
-          title="Medium & Warning Events"
-          value={highCount}
-          subtitle="Unusual spikes or credential attempts"
-          icon={<Zap className="w-5 h-5 text-amber-400" />}
+          title="High & Medium Severity"
+          value={highCount + mediumCount}
+          subtitle={`High: ${highCount} · Medium: ${mediumCount}`}
+          icon={<Zap className="w-5 h-5 text-orange-400" />}
+          badge={<Badge variant={highCount > 0 ? "high" : mediumCount > 0 ? "medium" : "low"}>{highCount > 0 ? "High" : mediumCount > 0 ? "Medium" : "Normal"}</Badge>}
         />
         <MetricCard
-          title="Active Model Status"
-          value="Random Forest"
-          subtitle="14 CIC-DDoS2019 features active"
-          icon={<Shield className="w-5 h-5 text-[#06B6D4]" />}
-          badge={<Badge variant="matrix">Online</Badge>}
+          title="Low Severity"
+          value={lowCount}
+          subtitle="Benign or baseline noise events"
+          icon={<Shield className="w-5 h-5 text-emerald-400" />}
+          badge={<Badge variant="low">Low</Badge>}
         />
       </div>
 
@@ -334,19 +339,22 @@ export default function DetectionPage() {
             </div>
 
             <select
+              aria-label="Filter alerts by severity"
               value={severityFilter}
               onChange={(e) => setSeverityFilter(e.target.value)}
               className="px-3 py-1.5 bg-[#1F2937]/70 border border-gray-700/60 rounded-lg text-xs text-gray-200 focus:outline-none focus:border-[#00FF9D]"
             >
               <option value="all">All Severities</option>
-              <option value="critical">Critical Only</option>
-              <option value="warning">Warning / High</option>
-              <option value="info">Info / Normal</option>
+              <option value="critical">Critical</option>
+              <option value="high">High</option>
+              <option value="medium">Medium</option>
+              <option value="low">Low</option>
             </select>
           </div>
         </CardHeader>
         <CardContent>
           <AlertsTable
+            key={`${severityFilter}-${searchIp}`}
             alerts={alerts}
             onSelectAlert={(alert) => setSelectedAlert(alert)}
           />

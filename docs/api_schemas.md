@@ -53,8 +53,8 @@ All 4xx client and 5xx server responses adhere to a sanitized envelope without l
 | **3** | `GET` | `/models` | AI & Detection | List registered classifiers and runtime approved model. |
 | **4** | `GET` | `/models/metrics` | AI & Detection | Retrieve verified model benchmark metrics (`rf-1.0.0` vs `iforest-1.0.0`). |
 | **5** | `POST` | `/detection/analyze` | AI & Detection | Execute ad-hoc ML flow feature vector inference. |
-| **6** | `POST` | `/traffic/flows` | Traffic | Ingest 1-second flow window records into the detection pipeline. |
-| **7** | `GET` | `/traffic/summary` | Traffic | Fetch rolling 1-second and 10-second traffic PPS/BPS statistics. |
+| **6** | `POST` | `/telemetry/ingress` | Telemetry | Ingest access log batches or metric items into sliding-window buffer. |
+| **7** | `GET` | `/telemetry/live` | Telemetry | Fetch live sliding-window traffic rates, RPS, and status metrics. |
 | **8** | `GET` | `/alerts` | Alerts | Paginated alert feed with severity filters (`low`, `medium`, `high`, `critical`). |
 | **9** | `GET` | `/mitigations/status` | Mitigation | Real-time defense shield status, countdown timer, dynamic host IP, and DNS gateways. |
 | **10** | `GET` | `/mitigations` | Mitigation | List active and historical mitigation actions with status filtering. |

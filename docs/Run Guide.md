@@ -1,347 +1,269 @@
-# SENTRIX — Developer & Operator Run Guide
+# SENTRIX — Operator & Developer Run Guide
 
-> **Step-by-step local execution guide for running, testing, injecting traffic, and operating SENTRIX.**
-
-This document provides clear, verified instructions for running the complete SENTRIX platform locally on **Windows PowerShell** and **Linux / macOS Bash**.
-
----
-
-## 1. Required Software Installations
-
-Ensure the following tools are installed on your workstation:
-
-| Requirement | Supported Versions | Verification Command | Notes |
-| :--- | :---: | :--- | :--- |
-| **Python** | `3.10` or `3.11` | `python --version` | Python 3.11 recommended |
-| **Node.js** | `18.x`, `20.x`, `22.x` | `node -v` | Node 20 LTS recommended |
-| **npm** | `9.x` or `10.x` | `npm -v` | Installed with Node.js |
-| **Git** | `2.x+` | `git --version` | For cloning repository |
-| **Docker** (Optional) | `24.0+` | `docker --version` | Required for containerized setup |
-| **Docker Compose** | `2.20+` | `docker compose version` | Required for containerized setup |
+**System Name:** SENTRIX (Secure Enterprise Network Telemetry & Real-Time Incident X-Defend)  
+**Version:** 2.0.0 (Cloud-Agnostic Release)  
+**Scope:** Developer Setup, SOC Operator Workflows, Attack Simulation, and Testing.
 
 ---
 
-## 2. Repository Setup
+## 1. System Requirements & Prerequisites
 
-Clone the repository and enter the root project directory:
+- **Python:** 3.10 to 3.12 (CPython)
+- **Node.js:** 20.x or 22.x LTS with npm / pnpm
+- **Git**
+- **Docker & Docker Compose** (Optional, for containerized run)
+- **PowerShell / Bash / curl** (for traffic telemetry generation and API testing)
+
+---
+
+## 2. Quickstart via Docker Compose
+
+The simplest way to run the complete platform is via Docker Compose:
 
 ```bash
-# Clone the repository
-git clone https://github.com/your-org/DDoS-Detection-and-Mitigation-Simulator.git
-
-# Navigate into the project root
-cd DDoS-Detection-and-Mitigation-Simulator
-```
-
-**Expected Result:** You are in `d:\DDoS-Detection-and-Mitigation-Simulator` (Windows) or `/path/to/DDoS-Detection-and-Mitigation-Simulator` (Linux/macOS).
-
----
-
-## 3. Virtual Environment Setup
-
-Create an isolated Python virtual environment inside the repository root.
-
-### On Windows (PowerShell):
-```powershell
-# Directory: Repository Root
-python -m venv .venv
-
-# Activate virtual environment
-.\.venv\Scripts\Activate.ps1
-```
-
-> **Troubleshooting Execution Policy Error:**
-> If PowerShell shows `cannot be loaded because running scripts is disabled on this system`, run:
-> ```powershell
-> Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
-> .\.venv\Scripts\Activate.ps1
-> ```
-
-### On Linux / macOS (Bash / Zsh):
-```bash
-# Directory: Repository Root
-python3 -m venv .venv
-
-# Activate virtual environment
-source .venv/bin/activate
-```
-
-**Expected Result:** Your terminal prompt will be prefixed with `(.venv)`.
-
----
-
-## 4. Backend Dependency Installation
-
-Install the backend package with development and testing dependencies in editable mode:
-
-```bash
-# Directory: Repository Root (with .venv active)
-pip install -e "backend[dev]"
-```
-
-**Expected Result:** Pip installs FastAPI, Uvicorn, SQLAlchemy, Alembic, Scikit-learn, NumPy, Pandas, Boto3, Pytest, and Ruff without errors.
-
----
-
-## 5. Frontend Dependency Installation
-
-Install Next.js and React dependencies:
-
-```bash
-# Directory: frontend/
-cd frontend
-npm install
-cd ..
-```
-
-**Expected Result:** `node_modules` is populated and `package-lock.json` is verified.
-
----
-
-## 6. Environment Configuration File
-
-Create your local `.env` configuration from the provided `.env.example`:
-
-### On Windows (PowerShell):
-```powershell
-# Directory: Repository Root
-Copy-Item .env.example .env
-```
-
-### On Linux / macOS (Bash):
-```bash
-# Directory: Repository Root
+# 1. Ensure .env exists
 cp .env.example .env
-```
 
-Open `.env` in an editor. For standard local development, the following default settings are recommended:
-
-```ini
-APP_ENV=development
-MODEL_PATH=models/approved_model.joblib
-DATABASE_URL=sqlite:///./sentrix.db
-API_AUTH_REQUIRED=false
-API_AUTH_TOKEN=local-dev-secret-token
-AWS_REGION=ap-south-1
-AWS_KINESIS_STREAM_NAME=sentrix-cloudfront-realtime-logs
-AWS_KINESIS_CONSUMER_ENABLED=false
-CORS_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
-```
-
-> [!NOTE]
-> Setting `API_AUTH_REQUIRED=false` allows quick local exploration without needing to paste Bearer tokens on every curl request. In production, always set `API_AUTH_REQUIRED=true`.
-
----
-
-## 7. Database Initialization & Migrations
-
-SENTRIX uses SQLAlchemy 2.0 with Alembic database migrations.
-
-Initialize the SQLite database and apply all schema migrations up to `head`:
-
-```bash
-# Directory: Repository Root (with .venv active)
-alembic -c backend/alembic.ini upgrade head
-```
-
-**Expected Result:** Alembic applies migrations `0001_initial`, `0002_observation_target_ip`, and `0003_aws_cloudfront_kinesis`, creating `sentrix.db`.
-
----
-
-## 8. Running the Application (Dual Terminal Mode)
-
-For local development with live code reloading:
-
-### Terminal 1: Backend Service (FastAPI)
-```powershell
-# Windows PowerShell (Repository Root)
-.\.venv\Scripts\Activate.ps1
-uvicorn app.main:app --app-dir backend --host 127.0.0.1 --port 8000 --reload
-```
-
-```bash
-# Linux / macOS Bash (Repository Root)
-source .venv/bin/activate
-uvicorn app.main:app --app-dir backend --host 127.0.0.1 --port 8000 --reload
-```
-
-**Expected Output:**
-```text
-INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
-INFO:     Started reloader process
-INFO:     Started server process
-INFO:     Waiting for application startup.
-INFO:     Application startup complete.
-```
-
-Verify backend health in a browser or curl:
-```bash
-curl http://127.0.0.1:8000/api/v1/health
-```
-**Response:** `{"status":"healthy","version":"0.1.0","environment":"development",...}`
-
----
-
-### Terminal 2: Frontend Service (Next.js 16)
-Open a new terminal window:
-
-```bash
-# Directory: frontend/
-cd frontend
-npm run dev
-```
-
-**Expected Output:**
-```text
-   ▲ Next.js 16.4.3
-   - Local:        http://localhost:3000
-   - Network:      http://192.168.x.x:3000
-
- ✓ Starting...
- ✓ Ready in 1200ms
-```
-
----
-
-## 9. Running via Docker Compose (Single Command Mode)
-
-To run the entire system in production-equivalent containers:
-
-```bash
-# Directory: Repository Root
+# 2. Build and launch services
 docker compose up -d --build
+
+# 3. View logs
+docker compose logs -f
 ```
 
-**Containers Launched:**
-- `sentrix-backend`: Listens on `http://localhost:8000`
-- `sentrix-frontend`: Listens on `http://localhost:3000`
+- **SOC Web Dashboard:** [http://localhost:3000](http://localhost:3000)
+- **Backend API Docs (Swagger):** [http://localhost:8000/docs](http://localhost:8000/docs)
+- **Health Check:** [http://localhost:8000/api/v1/health](http://localhost:8000/api/v1/health)
 
-To launch the optional standalone AWS Kinesis streaming worker:
-```bash
-docker compose --profile aws-worker up -d
-```
-
-To stop containers:
+To stop the containers:
 ```bash
 docker compose down
 ```
 
 ---
 
-## 10. Application URLs & Documentation
+## 3. Local Development Setup (Native OS)
 
-| Service / View | URL | Purpose |
-| :--- | :--- | :--- |
-| **SOC Web Dashboard** | [http://localhost:3000](http://localhost:3000) | Main operator console |
-| **Live Traffic Stream** | [http://localhost:3000/traffic](http://localhost:3000/traffic) | Real-time incoming request table with pagination |
-| **Attack Detection Center** | [http://localhost:3000/detection](http://localhost:3000/detection) | Statistical Z-score velocity & explainable AI |
-| **Machine Learning Hub** | [http://localhost:3000/models](http://localhost:3000/models) | Model health, schemas, metrics & interactive test |
-| **Attack Protection** | [http://localhost:3000/protection](http://localhost:3000/protection) | Defensive firewall rules, staging & WAF export |
-| **Cyber Range Simulator** | [http://localhost:3000/simulator](http://localhost:3000/simulator) | Synthetic chaos scenarios, M/M/1 queuing curves |
-| **AWS Integrations** | [http://localhost:3000/integrations](http://localhost:3000/integrations) | Amazon Kinesis stream status & mock test replay |
-| **System Health & Audit** | [http://localhost:3000/health](http://localhost:3000/health) | Service health & immutable audit log (CSV export) |
-| **Interactive Swagger Docs**| [http://localhost:8000/docs](http://localhost:8000/docs) | OpenAPI interactive explorer |
-| **ReDoc Specification** | [http://localhost:8000/redoc](http://localhost:8000/redoc) | Alternative formatted API specification |
+### 3.1 Backend Service (FastAPI)
 
----
+1. **Activate virtual environment:**
+   ```powershell
+   # Windows PowerShell:
+   .\.venv\Scripts\Activate.ps1
+   ```
+   *(Linux/macOS: `source .venv/bin/activate`)*
 
-## 11. Generating & Injecting Test Traffic
+2. **Install backend dependencies in editable mode:**
+   ```bash
+   pip install --upgrade pip setuptools wheel
+   pip install -e backend
+   ```
 
-SENTRIX includes built-in test traffic generators to verify live detection.
+3. **Run database migrations:**
+   ```bash
+   # From project root:
+   python -m alembic -c backend/alembic.ini upgrade head
+   ```
 
-### Method 1: Interactive Browser Injection
-1. Navigate to [http://localhost:3000/integrations](http://localhost:3000/integrations).
-2. Click **"Send Test Telemetry Batch"**.
-3. Navigate to [http://localhost:3000/traffic](http://localhost:3000/traffic) to observe incoming requests populate the table in real-time.
+4. **Start the FastAPI backend server:**
+   ```bash
+   uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload --app-dir backend
+   ```
 
-### Method 2: Python Traffic Injection Script
-Execute the bundled traffic simulation script:
-
-```bash
-# Directory: Repository Root (with .venv active)
-python scripts/send_test_traffic.py --target http://127.0.0.1:8000 --rps 50 --duration 10
-```
-
-### Method 3: Ingesting Raw Access Logs via cURL
-Send sample Nginx Combined access logs directly to the telemetry ingress endpoint:
-
-```bash
-curl -X POST http://127.0.0.1:8000/api/v1/telemetry/ingress \
-  -H "Content-Type: application/json" \
-  -d '{
-    "raw_logs": [
-      "198.51.100.25 - - [30/Oct/2026:10:00:00 +0000] \"GET /login HTTP/1.1\" 401 512 \"-\" \"Mozilla/5.0\"",
-      "198.51.100.25 - - [30/Oct/2026:10:00:01 +0000] \"GET /login HTTP/1.1\" 401 512 \"-\" \"Mozilla/5.0\"",
-      "198.51.100.25 - - [30/Oct/2026:10:00:02 +0000] \"GET /login HTTP/1.1\" 401 512 \"-\" \"Mozilla/5.0\""
-    ]
-  }'
-```
+5. **Verify backend health:**
+   ```bash
+   curl http://127.0.0.1:8000/api/v1/health
+   # Returns: {"status":"healthy", "database":"connected", ...}
+   ```
 
 ---
 
-## 12. Running Automated Tests
+### 3.2 Frontend Web Dashboard (Next.js 16)
 
-Run the complete backend automated test suite (184 tests):
+1. **Install Node dependencies:**
+   ```bash
+   cd frontend
+   npm install
+   ```
 
-```bash
-# Directory: Repository Root (with .venv active)
-pytest backend/tests -v
+2. **Launch the development server:**
+   ```bash
+   npm run dev
+   ```
+
+3. **Access the SOC Dashboard:**
+   Open [http://localhost:3000](http://localhost:3000) in your browser.
+
+---
+
+## 4. Operational Demonstrations & Scenarios
+
+SENTRIX includes dedicated SOC operator views:
+- **`/overview`:** Real-time pulse, active threat status, traffic summary, and quick shield control.
+- **`/detection`:** Attack detection center, live threat classification, and flagged security events.
+- **`/models`:** Machine Learning model health, benchmark metrics, and interactive flow predictor.
+- **`/protection`:** Firewall defense shield, staged dry-run rules, and Nginx/Caddy config exporter.
+- **`/simulator`:** Isolated Cyber Range lab for synthetic volumetric and application-layer chaos attacks.
+- **`/health`:** Service status, database connectivity verification, and audit logs.
+- **`/history`:** Regulatory compliance audit trail logging every detection and mitigation event.
+- **`/settings`:** Policy configuration matrix, EWMA sensitivity thresholds, and emergency kill-switch.
+
+---
+
+### Scenario A: Inject Legitimate Traffic (Normal Baseline)
+
+Stream legitimate requests from multiple client IPs:
+
+```powershell
+1..40 | ForEach-Object {
+    $ip = "192.0.2.$($_ % 15 + 1)"
+    $body = @{
+        format = "raw_batch"
+        items = @(
+            @{
+                client_ip = $ip
+                method = "GET"
+                path = "/api/v1/products"
+                status_code = 200
+                response_time_ms = (Get-Random -Minimum 15 -Maximum 40)
+                bytes_sent = (Get-Random -Minimum 800 -Maximum 2200)
+            }
+        )
+    } | ConvertTo-Json -Depth 5
+
+    Invoke-RestMethod -Uri "http://127.0.0.1:8000/api/v1/telemetry/ingress" -Method Post -Body $body -ContentType "application/json"
+    Start-Sleep -Milliseconds 80
+}
 ```
 
-### Run Specific Test Modules:
-```bash
-# Run AWS CloudFront & Kinesis integration tests:
-pytest backend/tests/integration/test_aws_cloudfront_kinesis.py -v
+**What you will observe:**
+- In **Live Telemetry** (`/telemetry`): Balanced requests per second, low P95 latency (<45ms), 100% 2xx status codes, and Shannon entropy $\eta \approx 0.85-0.95$.
+- In **Attack Detection** (`/detection`): Status displays **NORMAL TRAFFIC** with Z-scores within nominal ranges ($|Z| < 1.5$).
+- In **Overview** (`/overview`): System pulse shows green "ALL TRAFFIC LOOKS NORMAL".
 
-# Run Cyber Range simulation and M/M/1 queuing tests:
-pytest backend/tests/integration/test_tc08_simulation_safety.py -v
+---
 
-# Run API contract tests:
-pytest backend/tests/api/test_api_contracts.py -v
+### Scenario B: Inject Volumetric HTTP Flood (Attacker)
+
+Simulate a high-rate volumetric attack targeting search endpoints:
+
+```powershell
+1..150 | ForEach-Object {
+    $body = @{
+        format = "raw_batch"
+        items = @(
+            @{
+                client_ip = "198.51.100.88"
+                method = "POST"
+                path = "/search"
+                status_code = (Get-Random -InputObject @(500, 502, 503))
+                response_time_ms = (Get-Random -Minimum 1500 -Maximum 3500)
+                bytes_sent = 120
+            }
+        )
+    } | ConvertTo-Json -Depth 5
+
+    Invoke-RestMethod -Uri "http://127.0.0.1:8000/api/v1/telemetry/ingress" -Method Post -Body $body -ContentType "application/json"
+}
 ```
 
-### Run Code Formatting & Lint Checks:
-```bash
-# Format check:
-python -m ruff format --check backend
+**What you will observe:**
+- In **Live Telemetry** (`/telemetry`): Error rate surges above 50%, latency P95 spikes past 2500ms, and Shannon entropy collapses ($\eta < 0.25$).
+- In **Attack Detection** (`/detection`): Banner turns critical: **VOLUMETRIC HTTP FLOOD DETECTED**. Velocity indicators show $Z_{rps} \ge 3.5$ and $Z_{lat} \ge 3.0$.
+- In **Attack Detection Events** (`/detection`): A permanent incident is logged with severity `CRITICAL` and root-cause metrics.
 
-# Linter check:
-python -m ruff check backend
+---
+
+### Scenario C: Flash Crowd Differentiator (Zero False Positives)
+
+Simulate a sudden marketing promotion surge where dozens of genuine users visit simultaneously:
+
+```powershell
+1..80 | ForEach-Object {
+    $body = @{
+        format = "raw_batch"
+        items = @(
+            @{
+                client_ip = "203.0.113.$($_)"
+                method = "GET"
+                path = "/special-deal"
+                status_code = 200
+                response_time_ms = 22
+                bytes_sent = 4100
+            }
+        )
+    } | ConvertTo-Json -Depth 5
+
+    Invoke-RestMethod -Uri "http://127.0.0.1:8000/api/v1/telemetry/ingress" -Method Post -Body $body -ContentType "application/json"
+}
+```
+
+**What you will observe:**
+- In **Attack Detection** (`/detection`): Even though traffic volume surged ($Z_{rps} \ge 2.5$), high client entropy ($\eta \ge 0.80$) and low error rate (<5%) causes SENTRIX to classify the surge as **`FLASH_CROWD`** with recommendation **`ALLOW`**.
+- **Result:** Legitimate customers are never locked out.
+
+---
+
+### Scenario D: Export Defensive Rules for Production Firewalls
+
+1. Navigate to **Attack Protection** (`/protection`).
+2. Click **Export Nginx Conf** or **Export Caddyfile**.
+3. View or download the generated configuration snippets:
+
+**Nginx Configuration:**
+```nginx
+# SENTRIX Auto-Generated Defensive Rules
+# Mode: Active Enforcement
+
+deny 198.51.100.88;
+```
+
+**Caddyfile Configuration:**
+```caddy
+# SENTRIX Auto-Generated Defensive Rules
+@blocked remote_ip 198.51.100.88
+respond @blocked 403
 ```
 
 ---
 
-## 13. Stopping Services
+## 5. Integrating with Your Own Web Application
 
-- **Local Development (Terminal):** Press `Ctrl + C` in both the backend and frontend terminal windows.
-- **Docker Compose:** Run `docker compose down` in the repository root.
+SENTRIX provides ASGI middleware for FastAPI and Starlette apps.
+
+```python
+from fastapi import FastAPI
+from app.integrations.middleware import SentrixTelemetryMiddleware
+
+app = FastAPI()
+
+app.add_middleware(
+    SentrixTelemetryMiddleware,
+    sentrix_url="http://127.0.0.1:8000",
+    batch_size=50,
+    flush_interval_seconds=1.0,
+    api_token="your-api-token-if-configured",
+)
+```
+
+Every incoming request is asynchronously buffered, anonymized to `/24` or `/48` CIDR blocks for privacy, and forwarded to the SENTRIX detection core.
 
 ---
 
-## 14. Common Errors and Solutions
+## 6. Codebase Structure
 
-### 1. `ValidationException: Value 'mock-seq-...' at 'startingSequenceNumber' failed to satisfy constraint`
-- **Cause:** A mock sequence number generated during local testing was stored in `kinesis_checkpoints` and passed to AWS GetShardIterator API.
-- **Solution:** The codebase now contains a strict numeric regex guard and automatically purges non-numeric checkpoints. To manually wipe:
-  ```powershell
-  python -c "import sqlite3; con = sqlite3.connect('sentrix.db'); con.execute('DELETE FROM kinesis_checkpoints'); con.commit()"
-  ```
-
-### 2. `Address already in use: Port 8000 or 3000`
-- **Cause:** A previous instance of Uvicorn or Node.js is still running in the background.
-- **Solution:**
-  - **Windows:** Run `Get-Process python, node | Stop-Process` in PowerShell.
-  - **Linux/macOS:** Run `kill -9 $(lsof -t -i:8000) $(lsof -t -i:3000)`.
-
-### 3. `401 Unauthorized: Authentication required`
-- **Cause:** `API_AUTH_REQUIRED=true` is set in `.env`, but no Bearer token was provided in the HTTP request.
-- **Solution:** Either provide `-H "Authorization: Bearer <TOKEN>"` in your request, or set `API_AUTH_REQUIRED=false` in `.env` for local testing.
-
-### 4. `psycopg2 / DLL load failed` on Windows
-- **Cause:** Windows AppLocker or missing PostgreSQL C-runtime libraries.
-- **Solution:** SENTRIX automatically falls back to pure-Python `pg8000` driver if `psycopg2` cannot load. You can also use SQLite for local development (`DATABASE_URL=sqlite:///./sentrix.db`).
-
-### 5. `Cannot list Kinesis shards: AWS credentials missing`
-- **Cause:** `AWS_KINESIS_CONSUMER_ENABLED=true` is enabled, but AWS credentials are not configured.
-- **Solution:** Set `AWS_KINESIS_CONSUMER_ENABLED=false` in `.env` if you do not have an active AWS Kinesis stream running. Local mock testing can still be executed via `/api/v1/integrations/aws/kinesis/mock-ingest`.
-
+| Directory | Purpose |
+| :--- | :--- |
+| `backend/app/main.py` | FastAPI application entry point, lifecycle & CORS |
+| `backend/app/api/v1/` | REST API routes (alerts, mitigations, telemetry, simulations) |
+| `backend/app/detection/` | ML model loader, predictor, EWMA baselines & threat classifier |
+| `backend/app/features/` | Feature definitions, sliding windows & telemetry aggregator |
+| `backend/app/policy/` | Dual-signal hybrid policy engine & threshold evaluation |
+| `backend/app/mitigation/` | Virtual shield, leaky-bucket limiter & config exporters |
+| `backend/app/simulator/` | Isolated Cyber Range attack simulation engine |
+| `backend/app/storage/` | SQLAlchemy models, repositories & audit logging |
+| `frontend/src/app/` | Next.js 16 App Router pages (overview, telemetry, threats, etc.) |
+| `frontend/src/components/`| Reusable SOC UI components |
+| `frontend/src/lib/api.ts` | Type-safe REST client for SENTRIX backend |
+| `models/` | Trained Machine Learning model artifacts (`rf-1.0.0`) |
+| `ml/` | Training pipelines, evaluation scripts & dataset configs |

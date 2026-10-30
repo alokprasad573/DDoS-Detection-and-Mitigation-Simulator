@@ -2,10 +2,8 @@ import type { ComponentType, SVGProps } from "react";
 import {
   Activity,
   AlertTriangle,
-  Cloud,
   Cpu,
   HeartPulse,
-  Server,
   Shield,
   Sliders,
   Zap,
@@ -25,13 +23,6 @@ export const NAV_ROUTES: NavRoute[] = [
     label: "Overview",
     sublabel: "Traffic summary & system status",
     icon: Activity,
-  },
-  {
-    href: "/traffic",
-    label: "Live Traffic",
-    sublabel: "Real-time incoming requests",
-    icon: Server,
-    badge: "Live",
   },
   {
     href: "/detection",
@@ -58,12 +49,6 @@ export const NAV_ROUTES: NavRoute[] = [
     sublabel: "Safe test traffic generator",
     icon: Zap,
     badge: "Lab",
-  },
-  {
-    href: "/integrations",
-    label: "Integrations",
-    sublabel: "AWS CloudFront & Kinesis",
-    icon: Cloud,
   },
   {
     href: "/health",

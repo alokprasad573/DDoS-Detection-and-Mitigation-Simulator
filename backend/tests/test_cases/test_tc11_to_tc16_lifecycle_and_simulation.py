@@ -22,10 +22,45 @@ from app.api.v1.mitigations import (
     emergency_disable_mitigations,
     simulate_mitigation,
 )
-from app.api.v1.traffic import (
-    FlowObservationRequest,
-    ingest_flow_observation,
+from app.ingestion.schemas import FlowObservationRequest
+from app.ingestion.validators import (
+    validate_flow_features,
+    validate_iso8601_timestamp,
 )
+from app.services.pipeline import process_flow_pipeline
+
+
+def ingest_flow_observation(payload: FlowObservationRequest, session: Session) -> dict:
+    validated_timestamp = validate_iso8601_timestamp(payload.timestamp)
+    validate_flow_features(payload.features, payload.feature_schema_version)
+    result = process_flow_pipeline(
+        session=session,
+        source_id=payload.source_id,
+        timestamp=validated_timestamp,
+        window_seconds=payload.window_seconds,
+        feature_schema_version=payload.feature_schema_version,
+        features=payload.features,
+        target_ip=payload.target_ip,
+        target_port=payload.target_port,
+    )
+    return {
+        "status": "processed",
+        "event_id": result["event_id"],
+        "policy_decision": result["policy_decision"],
+        "alert_id": result["alert_id"],
+        "mitigation_action_id": result["mitigation_action_id"],
+        "prediction": result["prediction"],
+        "score": result["score"],
+        "alert_created": result["alert_id"] is not None,
+        "detection": {
+            "prediction": result["prediction"],
+            "score": result["score"],
+            "policy_decision": result["policy_decision"],
+            "traffic_threshold_exceeded": result["traffic_threshold_exceeded"],
+        },
+    }
+
+
 from app.core.config import get_settings
 from app.detection.predictor import FlowPrediction
 from app.features.definitions import FEATURE_SCHEMA_VERSION
@@ -69,6 +104,7 @@ def load_fixture_scenario(scenario_key: str) -> dict:
 
 def test_tc11_unauthorized_operator(monkeypatch: pytest.MonkeyPatch) -> None:
     """TC-11: Unauthorized operator: Missing, invalid, or expired tokens reject sensitive requests (401)."""
+    monkeypatch.setenv("DATABASE_URL", "sqlite:///./sentrix.db")
     monkeypatch.setenv("API_AUTH_REQUIRED", "true")
     monkeypatch.setenv("API_AUTH_TOKEN", "valid-secret-token")
     get_settings.cache_clear()

@@ -125,8 +125,20 @@ export default function MachineLearningPage() {
   }, []);
 
   useEffect(() => {
-    void loadModelInfo();
-  }, [loadModelInfo]);
+    let ignore = false;
+    void Promise.all([
+      api.getModels().catch(() => null),
+      api.getModelMetrics().catch(() => null),
+    ]).then(([models, metrics]) => {
+      if (ignore) return;
+      setModelsData(models);
+      setMetricsData(metrics);
+      setLoading(false);
+    });
+    return () => {
+      ignore = true;
+    };
+  }, []);
 
   const handleRunPrediction = async () => {
     const vector = BENCHMARK_VECTORS[selectedVectorKey];

@@ -1,5 +1,5 @@
 export * from "./models";
-export * from "./traffic";
+export * from "./charts";
 export * from "./alerts";
 export * from "./mitigation";
 export * from "./config";
@@ -17,4 +17,3 @@ export interface ApiError {
   requestId?: string;
   details?: unknown;
 }
-

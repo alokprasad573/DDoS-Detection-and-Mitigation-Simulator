@@ -22,8 +22,6 @@ dependencies = [
     "numpy",
     "httpx",
     "PyYAML",
-    "boto3>=1.34.0",
-    "botocore>=1.34.0",
 ]
 
 [project.optional-dependencies]

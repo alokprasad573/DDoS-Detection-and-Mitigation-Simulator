@@ -27,10 +27,8 @@ from app.api.v1.mitigations import (
     simulate_mitigation,
 )
 from app.api.v1.models import get_model_metrics, get_models
-from app.api.v1.traffic import get_traffic_summary, ingest_flow_observation
 from app.core.config import get_settings
 from app.features.definitions import FEATURE_NAMES, FEATURE_SCHEMA_VERSION
-from app.ingestion.schemas import FlowObservationRequest
 from app.safety.gate import set_emergency_disabled
 from app.storage.database import Base
 from app.storage.repositories import (
@@ -71,26 +69,13 @@ def test_2_and_3_models_endpoints() -> None:
     assert "iforest_metrics" in metrics_res
 
 
-def test_4_and_5_traffic_endpoints(db_session: Session) -> None:
-    """Contract: POST /api/v1/traffic/flows and GET /api/v1/traffic/summary."""
-    sample_features = {name: 100.0 for name in FEATURE_NAMES}
-    req = FlowObservationRequest(
-        source_id="sensor-01",
-        timestamp="2026-10-25T10:00:00Z",
-        window_seconds=10.0,
-        feature_schema_version=FEATURE_SCHEMA_VERSION,
-        features=sample_features,
-        target_ip="192.168.1.150",
-    )
-    ingest_res = ingest_flow_observation(req, db_session)
-    assert ingest_res["status"] == "processed"
-    assert ingest_res["event_id"].startswith("evt_")
-    observation = ObservationRepository(db_session).list_recent(limit=1)[0]
-    assert observation.target_ip == "192.168.1.150"
+def test_4_and_5_traffic_endpoints_removed() -> None:
+    """Contract: Removed /traffic endpoints must not exist in FastAPI app routes."""
+    from app.main import app
 
-    summary_res = get_traffic_summary()
-    assert summary_res.window_duration_seconds == 10.0
-    assert summary_res.packet_rate >= 0.0
+    route_paths = [getattr(route, "path", "") for route in app.routes]
+    assert "/api/v1/traffic/flows" not in route_paths
+    assert "/api/v1/traffic/summary" not in route_paths
 
 
 def test_6_detection_analyze_endpoint(db_session: Session) -> None:

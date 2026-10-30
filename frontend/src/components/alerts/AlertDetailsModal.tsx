@@ -104,14 +104,20 @@ export function AlertDetailsModal({ alert, onClose }: AlertDetailsModalProps) {
                   isCritical
                     ? "critical"
                     : isHigh
-                    ? "warning"
+                    ? "high"
                     : isMedium
-                    ? "cyan"
-                    : "normal"
+                    ? "medium"
+                    : "low"
                 }
-                className="text-[10px] font-bold uppercase"
+                className="text-[10px] font-bold uppercase px-2.5 py-0.5"
               >
-                {rawSev === "warning" ? "HIGH" : rawSev.toUpperCase()}
+                {isCritical
+                  ? "CRITICAL"
+                  : isHigh
+                  ? "HIGH"
+                  : isMedium
+                  ? "MEDIUM"
+                  : "LOW"}
               </Badge>
             </div>
           </div>

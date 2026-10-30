@@ -34,3 +34,20 @@ export interface ModelMetricsResponse {
   iforest_metrics?: CandidateMetrics;
 }
 
+export interface AnalyzeFlowRequest {
+  feature_schema_version?: string;
+  features: Record<string, number>;
+}
+
+export interface AnalyzeFlowResponse {
+  event_id: string;
+  model_version: string;
+  feature_schema_version: string;
+  prediction: string;
+  score_type: string;
+  score: number;
+  traffic_threshold_exceeded: boolean;
+  policy_decision: string;
+  mitigation_mode: string;
+  timestamp: string;
+}

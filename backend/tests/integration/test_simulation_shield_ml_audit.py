@@ -1,11 +1,10 @@
-"""Comprehensive verification test suite for SENTRIX Bug Fixes & AWS Audit.
+"""Comprehensive verification test suite for SENTRIX Bug Fixes & Security Audit.
 
 Covers:
 1. Issue 1: Attack and Shield independence (disabling shield does NOT stop attack; attack continues).
 2. Issue 2: Persistent simulation clock worker (runs advance independently of mounted page).
 3. Issue 3: ML 14-feature Schema 1.0.0 parity, genuine Random Forest inference, and honest validation.
-4. Issue 4: AWS Kinesis diagnostic status reporting and parser validation.
-5. Issue 5: Fixture typing and generator return annotations.
+4. Issue 4: Fixture typing and generator return annotations.
 """
 
 from __future__ import annotations
@@ -226,28 +225,11 @@ def test_issue_3_incomplete_features_returns_honest_validation_error() -> None:
 
 
 # ==============================================================================
-# ISSUE 4: AWS Kinesis Diagnostic Status Reporting
+# ISSUE 4: Generator Fixture Annotations
 # ==============================================================================
 
 
-def test_issue_4_kinesis_status_reporting_diagnostics() -> None:
-    """Verify that consumer status report returns truthful diagnostic states."""
-    from app.aws.kinesis_consumer import kinesis_consumer
-
-    rep = kinesis_consumer.get_status_report()
-    assert "status" in rep
-    assert "stream_name" in rep
-    assert "region" in rep
-    assert "metrics" in rep
-    assert rep["region"] in ("ap-south-1", "us-east-1")
-
-
-# ==============================================================================
-# ISSUE 5: Generator Fixture Annotations
-# ==============================================================================
-
-
-def test_issue_5_fixture_annotations_are_generators() -> None:
+def test_issue_4_fixture_annotations_are_generators() -> None:
     """Verify that pytest generator fixtures have Generator type annotations."""
     import inspect
 

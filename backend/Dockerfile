@@ -1,5 +1,5 @@
 # ==============================================================================
-# Multi-Stage Production Dockerfile for SENTRIX Backend (FastAPI)
+# Multi-Stage Production Dockerfile for SENTRIX Backend (FastAPI + ML Engine)
 # Security Hardened: Non-Root User, Minimal Slim Base, Isolated Virtualenv
 # ==============================================================================
 
@@ -15,6 +15,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 COPY backend/pyproject.toml backend/alembic.ini ./
+COPY backend/app ./app
 RUN pip install --no-cache-dir --upgrade pip setuptools wheel
 RUN pip install --no-cache-dir .
 
@@ -27,7 +28,7 @@ RUN groupadd -g 10001 sentrix && \
 
 WORKDIR /app
 
-# Install runtime dependencies (e.g. libpq for PostgreSQL)
+# Install runtime dependencies (libpq for PostgreSQL, curl for healthchecks)
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libpq5 \
     curl \
@@ -37,9 +38,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY --from=builder /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
 COPY --from=builder /usr/local/bin /usr/local/bin
 
-# Copy backend source code and migrations
+# Copy backend source code, migrations, and model artifacts
 COPY --chown=sentrix:sentrix backend/app /app/app
+COPY --chown=sentrix:sentrix backend/migrations /app/migrations
 COPY --chown=sentrix:sentrix backend/alembic.ini /app/alembic.ini
+COPY --chown=sentrix:sentrix models/ /app/models/
 COPY --chown=sentrix:sentrix data/ /app/data/
 
 # Set environment defaults
@@ -57,9 +60,7 @@ USER sentrix
 EXPOSE 8000
 
 HEALTHCHECK --interval=15s --timeout=5s --start-period=10s --retries=3 \
-    CMD curl -f http://localhost:8000/api/v1/health || exit 1
+    CMD curl -f http://localhost:8000/healthz || exit 1
 
-# State is currently process-local. Keep one worker until shared state is moved
-# to external storage so telemetry, rules, and emergency state stay consistent.
+# Single worker preserves process-local telemetry and clock continuity
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "1", "--proxy-headers"]
-

@@ -180,6 +180,8 @@ class SimulationRunManager:
             )
 
         simulation_clock_worker.clear_run(run_id)
+        self.alert_repo.resolve_alerts_for_run(run_id)
+        self.mit_repo.expire_simulation_mitigations()
         updated = self.repo.update_run_status(run_id, "paused")
         self.audit_repo.log(
             event_type="simulation_paused",
@@ -199,6 +201,7 @@ class SimulationRunManager:
             return run
 
         now = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+        simulation_clock_worker.clear_run(run_id)
         _RUN_EVALUATORS.pop(run_id, None)
         self.alert_repo.resolve_alerts_for_run(run_id)
         self.mit_repo.expire_simulation_mitigations()
@@ -231,6 +234,7 @@ class SimulationRunManager:
         run.scorecard_json = None
         run.completed_at = None
         run.updated_at = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+        simulation_clock_worker.clear_run(run_id)
         _RUN_EVALUATORS.pop(run_id, None)
         self.alert_repo.resolve_alerts_for_run(run_id)
         self.mit_repo.expire_simulation_mitigations()
@@ -423,6 +427,7 @@ class SimulationRunManager:
 
         # Check for completion (ticks 0 to total_ticks - 1 run for exactly total_ticks duration)
         if next_tick >= run.total_ticks:
+            simulation_clock_worker.clear_run(run_id)
             _RUN_EVALUATORS.pop(run_id, None)
             self.alert_repo.resolve_alerts_for_run(run_id)
             self.mit_repo.expire_simulation_mitigations()
@@ -654,9 +659,9 @@ class SimulationClockWorker:
     def _get_session(self) -> Session:
         if self._session_factory:
             return self._session_factory()
-        from app.storage.database import get_db_session_factory
+        from app.storage.database import get_session_factory
 
-        return get_db_session_factory()()
+        return get_session_factory()()
 
     def wake(self) -> None:
         self._wake_event.set()
@@ -697,7 +702,6 @@ class SimulationClockWorker:
                     now = time.time()
 
                     if not running_runs:
-                        session.close()
                         self._wake_event.wait(timeout=0.5)
                         self._wake_event.clear()
                         continue
@@ -711,9 +715,16 @@ class SimulationClockWorker:
                         if now - last_t >= interval:
                             with self._lock:
                                 self._last_tick_times[r.run_id] = now
-                            manager.execute_single_step(
-                                r.run_id, user_id="simulation_clock"
-                            )
+                            try:
+                                manager.execute_single_step(
+                                    r.run_id, user_id="simulation_clock"
+                                )
+                            except Exception as step_exc:  # noqa: BLE001
+                                logger.warning(
+                                    "Error stepping simulation %s: %s",
+                                    r.run_id,
+                                    step_exc,
+                                )
                 finally:
                     session.close()
             except Exception as exc:  # noqa: BLE001

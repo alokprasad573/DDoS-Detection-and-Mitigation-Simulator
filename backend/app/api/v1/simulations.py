@@ -15,6 +15,7 @@ from app.simulator.manager import (
     IncompatibleRunComparisonError,
     InvalidControlTransitionError,
     SimulationRunManager,
+    simulation_clock_worker,
 )
 from app.simulator.scenarios import ScenarioConfig, ScenarioType
 from app.simulator.victim import VirtualVictimConfig
@@ -83,7 +84,7 @@ class SimulationListResponse(BaseModel):
 
 
 class SimulationControlRequest(BaseModel):
-    action: Literal["start", "pause", "resume", "step", "cancel", "reset"]
+    action: Literal["start", "pause", "resume", "step", "cancel", "reset", "stop"]
 
 
 class SimulationControlResponse(BaseModel):
@@ -250,15 +251,20 @@ def control_simulation_run(
     try:
         if req.action in ("start", "resume"):
             run = manager.start_or_resume_run(run_id)
+            simulation_clock_worker.start()
+            simulation_clock_worker.wake()
             msg = f"Simulation transitioned to {run.status}"
         elif req.action == "pause":
             run = manager.pause_run(run_id)
+            simulation_clock_worker.clear_run(run_id)
             msg = "Simulation paused"
-        elif req.action == "cancel":
+        elif req.action in ("cancel", "stop"):
             run = manager.cancel_run(run_id)
-            msg = "Simulation cancelled"
+            simulation_clock_worker.clear_run(run_id)
+            msg = "Simulation stopped"
         elif req.action == "reset":
             run = manager.reset_run(run_id)
+            simulation_clock_worker.clear_run(run_id)
             msg = "Simulation reset to tick 0"
         elif req.action == "step":
             run, _ = manager.execute_single_step(run_id)

@@ -9,12 +9,11 @@ export default function robots(): MetadataRoute.Robots {
         userAgent: "*",
         allow: ["/", "/overview"],
         disallow: [
-          "/telemetry",
-          "/threats",
-          "/alerts",
-          "/mitigation",
+          "/detection",
+          "/models",
+          "/protection",
           "/simulator",
-          "/history",
+          "/health",
           "/settings",
           "/api/",
         ],
@@ -23,4 +22,3 @@ export default function robots(): MetadataRoute.Robots {
     sitemap: `${baseUrl}/sitemap.xml`,
   };
 }
-

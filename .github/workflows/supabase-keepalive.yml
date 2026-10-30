@@ -1,0 +1,34 @@
+name: Supabase Database Keepalive
+
+# Prevents Supabase Free Tier databases from pausing after 7 days of inactivity
+# Pings SENTRIX /internal/keepalive which executes SELECT 1 against the Supabase database.
+
+on:
+  schedule:
+    # Runs every 3 days at 06:00 UTC
+    - cron: "0 6 */3 * *"
+  workflow_dispatch: # Allows manual trigger from GitHub UI
+
+jobs:
+  keepalive:
+    name: Ping Database Keepalive Endpoint
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Ping Keepalive Endpoint
+        env:
+          PROD_API_URL: ${{ secrets.PROD_API_URL }}
+          KEEPALIVE_SECRET: ${{ secrets.KEEPALIVE_SECRET }}
+          API_AUTH_TOKEN: ${{ secrets.API_AUTH_TOKEN }}
+        run: |
+          if [ -z "$PROD_API_URL" ]; then
+            echo "PROD_API_URL secret not set. Skipping keepalive ping."
+            exit 0
+          fi
+
+          TOKEN="${KEEPALIVE_SECRET:-$API_AUTH_TOKEN}"
+          echo "Pinging ${PROD_API_URL}/internal/keepalive..."
+
+          RESPONSE=$(curl -fsS -H "Authorization: Bearer $TOKEN" "${PROD_API_URL}/internal/keepalive")
+          echo "Keepalive response: $RESPONSE"
+          echo "Supabase database activity refreshed successfully."
+

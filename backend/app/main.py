@@ -10,7 +10,6 @@ from starlette.middleware.base import RequestResponseEndpoint
 from app.api.internal import router as internal_router
 from app.api.v1.alerts import router as alerts_router
 from app.api.v1.audit import router as audit_router
-from app.api.v1.aws_kinesis import router as aws_kinesis_router
 from app.api.v1.config import router as config_router
 from app.api.v1.detection import router as detection_router
 from app.api.v1.health import router as health_router
@@ -18,14 +17,16 @@ from app.api.v1.mitigations import router as mitigations_router
 from app.api.v1.models import router as models_router
 from app.api.v1.simulations import router as simulations_router
 from app.api.v1.telemetry import router as telemetry_router
-from app.api.v1.traffic import router as traffic_router
-from app.aws.kinesis_consumer import kinesis_consumer
 from app.core.config import get_settings, validate_runtime_settings
 from app.core.errors import install_error_handlers
 from app.core.logging import configure_logging
 from app.simulator.manager import simulation_clock_worker
 from app.storage.database import get_session_factory, init_db
-from app.storage.repositories import SimulationRunRepository
+from app.storage.repositories import (
+    AlertRepository,
+    MitigationRepository,
+    SimulationRunRepository,
+)
 
 
 @asynccontextmanager
@@ -38,10 +39,8 @@ async def lifespan(_: FastAPI) -> AsyncIterator[None]:
     session_factory = get_session_factory()
     with session_factory() as session:
         SimulationRunRepository(session).mark_interrupted_runs()
-
-    # Start Kinesis consumer worker if enabled in runtime configuration
-    if settings.aws_kinesis_consumer_enabled:
-        kinesis_consumer.start_background()
+        AlertRepository(session).resolve_inactive_simulation_alerts()
+        MitigationRepository(session).expire_simulation_mitigations()
 
     # Start simulation virtual clock background worker
     simulation_clock_worker.start()
@@ -49,8 +48,6 @@ async def lifespan(_: FastAPI) -> AsyncIterator[None]:
     yield
 
     simulation_clock_worker.stop()
-    if settings.aws_kinesis_consumer_enabled:
-        kinesis_consumer.stop()
 
 
 def create_app() -> FastAPI:
@@ -71,9 +68,7 @@ def create_app() -> FastAPI:
 
     # Register API routers under /api/v1 prefix
     app.include_router(health_router, prefix="/api/v1")
-    app.include_router(traffic_router, prefix="/api/v1")
     app.include_router(telemetry_router, prefix="/api/v1")
-    app.include_router(aws_kinesis_router, prefix="/api/v1")
     app.include_router(detection_router, prefix="/api/v1")
     app.include_router(models_router, prefix="/api/v1")
     app.include_router(alerts_router, prefix="/api/v1")
@@ -85,6 +80,12 @@ def create_app() -> FastAPI:
     # Register internal keepalive endpoint (/internal/keepalive and /api/v1/keepalive)
     app.include_router(internal_router, prefix="/internal")
     app.include_router(internal_router, prefix="/api/v1")
+
+    # Unauthenticated liveness probes for Docker, Kubernetes, and Render
+    @app.get("/", tags=["liveness"])
+    @app.get("/healthz", tags=["liveness"])
+    def root_liveness() -> dict[str, str]:
+        return {"status": "ok", "service": "sentrix-backend"}
 
     @app.middleware("http")
     async def add_request_id(

@@ -13,7 +13,6 @@ import {
   CardTitle,
 } from "@/components/ui/Card";
 import {
-  AlertTriangle,
   CheckCircle2,
   Power,
   RefreshCw,
@@ -79,7 +78,7 @@ export default function ProtectionPage() {
     };
   }, []);
 
-  const { data, loading, error, isStale, isDisconnected, lastUpdated, refresh } =
+  const { data, loading, isStale, isDisconnected, lastUpdated, refresh } =
     usePolling<PolledMitigationData>(fetchMitigations, 3000);
 
   const mitigationStatus = localStatusOverride ?? data?.status ?? null;
@@ -288,7 +287,7 @@ export default function ProtectionPage() {
         technicalDetails={
           <div className="space-y-1 text-[11px]">
             <p><strong className="text-gray-200">Enforcement Engine:</strong> In-process Token Bucket rate limiter with configurable burst capacity.</p>
-            <p><strong className="text-gray-200">Rule Exporters:</strong> Can generate native AWS WAFv2 JSON ACLs, Nginx limit_req_zone snippets, and Caddy rate_limit directives.</p>
+            <p><strong className="text-gray-200">Rule Exporters:</strong> Can generate Nginx limit_req_zone snippets and Caddy rate_limit directives.</p>
             <p><strong className="text-gray-200">Safety Bounds:</strong> 50 to 50,000 PPS rate limits, maximum duration 3,600s with automatic rollback on timer expiry.</p>
           </div>
         }

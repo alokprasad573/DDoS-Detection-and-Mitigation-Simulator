@@ -1,0 +1,46 @@
+# ==============================================================================
+# Docker Build Ignore File - Root Context
+# Prevents host artifacts, virtual environments, and caches from bloating image
+# ==============================================================================
+
+# Version Control
+.git
+.gitignore
+
+# Python Virtual Environments & Caches
+.venv
+venv/
+env/
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Node.js & Next.js Caches
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+*.log
+
+# Databases & Runtime State
+*.db
+*.sqlite3
+*.db-journal
+sentrix.db
+sentrix_test.db
+data/*.db
+
+# IDE, OS & Editor Artifacts
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# Temporary & Scratch Files
+scratch/
+

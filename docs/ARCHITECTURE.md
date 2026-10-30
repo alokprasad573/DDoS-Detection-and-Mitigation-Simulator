@@ -15,10 +15,10 @@ flowchart TD
     subgraph Traffic_Layer["1. Ingress & Telemetry Ingestion Tier"]
         Clients["Web Visitors / Attackers"]
         ReverseProxy["Reverse Proxy (Nginx / Caddy / Cloudflare)"]
-        ASGIMiddleware["Sentrix ASGI Middleware (FastAPI / Starlette)"]
-        IngressAPI["Telemetry Ingress API (/api/v1/telemetry/ingress)"]
+        ASGIMiddleware["SENTRIX ASGI Middleware (FastAPI / Starlette)"]
+        IngressAPI["Telemetry Ingress API (/api/v1/telemetry)"]
         LogParser["Log Parser (Combined, CLF, JSON)"]
-        PrivacyMasker["GDPR / Subnet Privacy Masker (/24, /48)"]
+        PrivacyMasker["GDPR Privacy Masker (/24 IPv4, /48 IPv6)"]
 
         Clients --> ReverseProxy
         ReverseProxy --> IngressAPI
@@ -28,73 +28,94 @@ flowchart TD
     end
 
     subgraph Feature_Layer["2. Sliding-Window Aggregation & Feature Engine"]
-        CircBuffer["Circular Buffer (60s Retention)"]
-        PercentileCalc["Percentile Engine (p50, p90, p99 Latencies)"]
-        EntropyCalc["Shannon Entropy Calculator H(X) & Entropy Ratio η"]
-        Aggregator["TelemetryAggregator (Thread-Safe Deque)"]
+        Aggregator["TelemetryAggregator (Thread-Safe Circular Deque)"]
+        CircBuffer["Time Window Buffer (1s - 60s Retention)"]
+        PercentileCalc["Latency Percentile Engine (p50, p90, p95, p99)"]
+        EntropyCalc["Shannon Entropy Calculator H(X) & Normalized Ratio η"]
+        FeatureExtractor["14-Flow Feature Extractor (CIC-DDoS2019 Schema)"]
 
         PrivacyMasker --> Aggregator
         Aggregator --> CircBuffer
         CircBuffer --> PercentileCalc
         CircBuffer --> EntropyCalc
+        CircBuffer --> FeatureExtractor
     end
 
-    subgraph Detection_Layer["3. Multi-Tier Threat Detection Engine"]
-        EWMA["Adaptive Baseline Tracker (EWMA Mean μ_t, Moving Variance σ_t^2)"]
-        ZScore["Velocity Shift Engine (Z_rps, Z_err, Z_lat, Z_bps)"]
-        ThreatClassifier["Explainable Threat Classifier"]
+    subgraph Detection_Layer["3. Dual-Signal Detection & Intelligence Tier"]
+        EWMA["Adaptive Baseline Tracker (EWMA Mean μ_t, Variance σ_t^2)"]
+        ZScore["Velocity Shift Engine (Z_rps, Z_err, Z_lat)"]
+        MLModel["Random Forest ML Classifier (rf-1.0.0, 14 Features)"]
+        ThreatClassifier["Explainable Multi-Tier Threat Classifier"]
         FlashCrowdDiff{"Flash Crowd Differentiator"}
 
         Aggregator --> EWMA
         EWMA --> ZScore
+        FeatureExtractor --> MLModel
         ZScore --> ThreatClassifier
+        EntropyCalc --> ThreatClassifier
         ThreatClassifier --> FlashCrowdDiff
     end
 
     subgraph Defense_Layer["4. Defensive Mitigation & Policy Engine"]
+        DualPolicy["Dual-Signal Policy Consensus Engine"]
+        SafetyGate["Protected Allowlist Guard (127.0.0.1, RFC 1918)"]
         DryRunEngine["Staged Dry-Run Mitigation Engine"]
         RateLimiter["Leaky Bucket Rate Limiter"]
-        AllowlistGuard["Protected Infrastructure Allowlist Guard"]
         TTLPruner["Automatic Rule TTL Pruning"]
-        ConfigExporter["Config Exporters (Nginx / Caddy / Cloudflare)"]
+        ConfigExporter["Config Exporters (Nginx / Caddy Firewalls)"]
+        SimEngine["Cyber Range Simulator (Discrete-Event M/M/1 Queue)"]
 
-        FlashCrowdDiff -- "ATTACK DETECTED" --> DryRunEngine
-        FlashCrowdDiff -- "FLASH CROWD" --> AllowlistGuard
+        FlashCrowdDiff -- "ATTACK SIGNAL" --> DualPolicy
+        MLModel -- "PROBABILITY SCORE" --> DualPolicy
+        FlashCrowdDiff -- "VIRAL SURGE" --> SafetyGate
+        DualPolicy --> SafetyGate
+        SafetyGate --> DryRunEngine
         DryRunEngine --> RateLimiter
         DryRunEngine --> TTLPruner
         DryRunEngine --> ConfigExporter
     end
 
-    subgraph Persistence_Layer["5. Relational Persistence & Audit Trail"]
-        DB[(SQLite / PostgreSQL Engine)]
+    subgraph Persistence_Layer["5. Relational Persistence & Audit Ledger"]
+        DB["SQLite / PostgreSQL Database (SQLAlchemy + Alembic)"]
+        ObsModel["ObservationModel"]
+        DetModel["DetectionModel"]
         AlertModel["AlertModel (Incidents)"]
-        AuditModel["AuditEventModel (Audit Trail)"]
-        RuleModel["MitigationRuleModel (Active Rules)"]
+        MitModel["MitigationModel (Defense Rules)"]
+        AuditModel["AuditEventModel (Immutable Audit Trail)"]
 
-        FlashCrowdDiff --> AlertModel
-        DryRunEngine --> RuleModel
+        DryRunEngine --> MitModel
+        DualPolicy --> DetModel
+        DualPolicy --> AlertModel
+        FeatureExtractor --> ObsModel
         DryRunEngine --> AuditModel
+        ObsModel --> DB
+        DetModel --> DB
         AlertModel --> DB
+        MitModel --> DB
         AuditModel --> DB
-        RuleModel --> DB
     end
 
-    subgraph Presentation_Layer["6. Next.js 16 Unified SOC Dashboard Tier"]
-        SOC_Overview["/overview (Live Traffic Pulse)"]
-        SOC_Telemetry["/telemetry (Live HTTP Telemetry)"]
-        SOC_Threats["/threats (Threat Center & Z-Scores)"]
-        SOC_Alerts["/alerts (Persistent Incidents)"]
-        SOC_Mitigation["/mitigation (Defensive Rules & Exporter)"]
-        SOC_Simulator["/simulator (Isolated Cyber Range Lab)"]
-        SOC_History["/history (Regulatory Audit Ledger)"]
-        SOC_Settings["/settings (Policy Matrix)"]
+    subgraph Presentation_Layer["6. Next.js 16 Web SOC Dashboard Tier"]
+        Browser["Security Analyst Web Browser"]
+        NextJS["Next.js 16 Standalone Server (App Router)"]
+        ProxyRoute["/api/proxy/[...path] (Bearer Token Auth & CORS Guard)"]
+        
+        Browser <--> NextJS
+        NextJS <--> ProxyRoute
 
-        DB --> SOC_Alerts
-        DB --> SOC_History
-        DB --> SOC_Mitigation
-        EWMA --> SOC_Threats
-        Aggregator --> SOC_Telemetry
-        DryRunEngine --> SOC_Mitigation
+        subgraph SOC_Routes["SOC Analyst Workspaces"]
+            SOC_Overview["/overview (System Pulse & Status)"]
+            SOC_Detection["/detection (Attack Detection & Events)"]
+            SOC_Models["/models (Machine Learning Model Health)"]
+            SOC_Protection["/protection (Firewall Rules & Defense Shield)"]
+            SOC_Simulator["/simulator (Isolated Cyber Range Lab)"]
+            SOC_Health["/health (Service Health & Audit Logs)"]
+            SOC_Settings["/settings (Policy Matrix & Sensitivity)"]
+        end
+
+        ProxyRoute <--> DB
+        ProxyRoute <--> IngressAPI
+        ProxyRoute <--> SimEngine
     end
 ```
 

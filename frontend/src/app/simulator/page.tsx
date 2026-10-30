@@ -43,6 +43,7 @@ export default function SimulatorPage() {
   const [pastRuns, setPastRuns] = useState<SimulationRunSummary[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [isStepping, setIsStepping] = useState<boolean>(false);
+  const [isControlling, setIsControlling] = useState<boolean>(false);
   const [isExportingCsv, setIsExportingCsv] = useState<boolean>(false);
   const [isExportingJson, setIsExportingJson] = useState<boolean>(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -53,7 +54,7 @@ export default function SimulatorPage() {
   const isSteppingTickerRef = useRef<boolean>(false);
 
   // Load run details & committed ticks
-  const loadRunDetail = useCallback(async (runId: string) => {
+  const loadRunDetail = useCallback(async (runId: string): Promise<SimulationRunResponse | null> => {
     try {
       const run = await api.getSimulation(runId);
       setActiveRun(run);
@@ -64,8 +65,10 @@ export default function SimulatorPage() {
       if (ticks.length > 0) {
         setLatestTick(ticks[ticks.length - 1]);
       }
+      return run;
     } catch (err: unknown) {
       setErrorMsg(getErrorMessage(err, "Failed to load test run details"));
+      return null;
     }
   }, []);
 
@@ -113,22 +116,31 @@ export default function SimulatorPage() {
       return;
     }
 
+    // Determine poll interval based on speed:
+    // 1x speed ticks every 1000ms -> poll every 500ms
+    // 10x speed ticks every 100ms -> poll every 100ms
+    // 100x speed ticks every 10ms -> poll every 50ms
     const tickIntervalMs =
-      speed >= 100.0 ? 50 : speed >= 10.0 ? 200 : 1000;
+      speed >= 100.0 ? 50 : speed >= 10.0 ? 100 : 500;
 
     tickerRef.current = setInterval(async () => {
       if (isSteppingTickerRef.current) return;
       isSteppingTickerRef.current = true;
       try {
         // Backend persistent worker continuously advances running simulations.
-        // Frontend subscribes to latest authoritative tick updates without owning clock.
-        await loadRunDetail(runId);
+        // Frontend receives latest authoritative tick updates.
+        const freshRun = await loadRunDetail(runId);
         if (typeof window !== "undefined") {
           window.dispatchEvent(new CustomEvent("sentrix:shield_update"));
         }
-        if (activeRun?.status === "completed" || activeRun?.status === "cancelled") {
+        if (freshRun && (freshRun.status === "completed" || freshRun.status === "cancelled")) {
+          if (tickerRef.current) clearInterval(tickerRef.current);
           await refreshPastRuns();
-          setStatusMessage("Test run completed successfully! Performance scorecard ready.");
+          setStatusMessage(
+            freshRun.status === "completed"
+              ? "Simulation completed successfully! Performance scorecard ready."
+              : "Simulation stopped."
+          );
         }
       } catch (err: unknown) {
         if (process.env.NODE_ENV === "development") {
@@ -186,7 +198,8 @@ export default function SimulatorPage() {
 
   // Run lifecycle controls (start, pause, resume, step, cancel, reset)
   const handleControl = async (action: "start" | "pause" | "resume" | "step" | "cancel" | "reset") => {
-    if (!activeRun) return;
+    if (!activeRun || isControlling) return;
+    setIsControlling(true);
     setErrorMsg(null);
     setStatusMessage(null);
     setIsStepping(action === "step");
@@ -201,20 +214,21 @@ export default function SimulatorPage() {
         window.dispatchEvent(new CustomEvent("sentrix:shield_update"));
       }
 
-      if (action === "start") setStatusMessage("Traffic test started. Observing defense engine reaction...");
-      else if (action === "pause") setStatusMessage("Traffic test paused.");
-      else if (action === "resume") setStatusMessage("Traffic test resumed.");
-      else if (action === "step") setStatusMessage(`Advanced test clock by +1 second.`);
-      else if (action === "cancel") setStatusMessage("Traffic test stopped.");
+      if (action === "start") setStatusMessage("Attack simulation started automatically. Advancing step-by-step...");
+      else if (action === "pause") setStatusMessage("Attack simulation paused.");
+      else if (action === "resume") setStatusMessage("Attack simulation resumed. Advancing step-by-step...");
+      else if (action === "step") setStatusMessage("Advanced test clock by +1 second.");
+      else if (action === "cancel") setStatusMessage("Attack simulation stopped.");
       else if (action === "reset") {
         setRecentTicks([]);
         setLatestTick(null);
-        setStatusMessage("Traffic test reset to beginning. Ready to run again!");
+        setStatusMessage("Attack simulation reset to beginning. Ready to start!");
       }
     } catch (err: unknown) {
       setErrorMsg(getErrorMessage(err, `Action ${action} failed`));
     } finally {
       setIsStepping(false);
+      setIsControlling(false);
     }
   };
 
@@ -372,6 +386,7 @@ export default function SimulatorPage() {
               <SimulatorControls
                 activeRun={activeRun}
                 isStepping={isStepping}
+                isControlling={isControlling}
                 isExportingCsv={isExportingCsv}
                 isExportingJson={isExportingJson}
                 onControl={handleControl}

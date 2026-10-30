@@ -14,6 +14,7 @@ import type { SimulationRunResponse } from "@/types";
 interface SimulatorControlsProps {
   activeRun: SimulationRunResponse;
   isStepping: boolean;
+  isControlling?: boolean;
   isExportingCsv: boolean;
   isExportingJson: boolean;
   onControl: (action: "start" | "pause" | "resume" | "step" | "cancel" | "reset") => void;
@@ -23,6 +24,7 @@ interface SimulatorControlsProps {
 export function SimulatorControls({
   activeRun,
   isStepping,
+  isControlling = false,
   isExportingCsv,
   isExportingJson,
   onControl,
@@ -68,6 +70,7 @@ export function SimulatorControls({
               <Button
                 variant="primary"
                 size="sm"
+                disabled={isControlling}
                 onClick={() => onControl(activeRun.status === "paused" ? "resume" : "start")}
               >
                 <Play className="w-3.5 h-3.5" />
@@ -80,6 +83,7 @@ export function SimulatorControls({
             <Button
               variant="outline"
               size="sm"
+              disabled={isControlling}
               onClick={() => onControl("pause")}
             >
               <Pause className="w-3.5 h-3.5" />
@@ -87,13 +91,14 @@ export function SimulatorControls({
             </Button>
           )}
 
-          {/* Single Step */}
+          {/* Single Step (Optional diagnostic control) */}
           {activeRun.status !== "completed" && activeRun.status !== "cancelled" && (
             <Button
               variant="outline"
               size="sm"
               onClick={() => onControl("step")}
-              disabled={isStepping}
+              disabled={isStepping || isControlling || activeRun.status === "running"}
+              title={activeRun.status === "running" ? "Clock is running automatically" : "Step forward +1s"}
             >
               <FastForward className="w-3.5 h-3.5 text-[#00FF9D]" />
               {isStepping ? "Stepping..." : "Step +1s"}
@@ -105,6 +110,7 @@ export function SimulatorControls({
             <Button
               variant="danger"
               size="sm"
+              disabled={isControlling}
               onClick={() => onControl("cancel")}
             >
               <Square className="w-3 h-3" />
@@ -119,6 +125,7 @@ export function SimulatorControls({
             <Button
               variant="outline"
               size="sm"
+              disabled={isControlling}
               onClick={() => onControl("reset")}
             >
               <RotateCcw className="w-3.5 h-3.5" />
@@ -150,22 +157,25 @@ export function SimulatorControls({
         </div>
       </div>
 
-      {/* Virtual Progress Bar */}
-      <div className="space-y-1.5 font-mono">
-        <div className="flex justify-between text-xs">
-          <span className="text-gray-200 font-medium">
-            Simulation Progress: {progressPct}%
-          </span>
+      {/* Attack Progress Bar & Tick Status */}
+      <div className="space-y-1.5">
+        <div className="flex items-center justify-between text-xs font-mono">
           <span className="text-gray-400">
-            Tick {currentTick} / {totalTicks} seconds
+            Attack Clock Progression:{" "}
+            <strong className="text-gray-200">
+              {currentTick}s / {totalTicks}s
+            </strong>
           </span>
+          <span className="text-[#00FF9D] font-bold">{progressPct}%</span>
         </div>
-        <div className="w-full bg-[#090D16] h-2.5 rounded-full overflow-hidden border border-gray-700/50">
+        <div className="w-full h-2 bg-[#090D16] rounded-full overflow-hidden border border-gray-800">
           <div
             className={`h-full transition-all duration-300 rounded-full ${
               activeRun.status === "running"
-                ? "bg-[#EF4444] shadow-[0_0_12px_#EF4444]"
-                : "bg-[#00FF9D] shadow-[0_0_12px_#00FF9D]"
+                ? "bg-gradient-to-r from-[#00FF9D] via-[#06B6D4] to-[#EF4444]"
+                : activeRun.status === "completed"
+                ? "bg-[#00FF9D]"
+                : "bg-gray-600"
             }`}
             style={{ width: `${progressPct}%` }}
           />
@@ -174,4 +184,3 @@ export function SimulatorControls({
     </div>
   );
 }
-

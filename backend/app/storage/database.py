@@ -94,6 +94,10 @@ def get_session_factory(settings: Settings | None = None) -> sessionmaker[Sessio
     return _session_factory(database_url)
 
 
+# Backward compatibility alias
+get_db_session_factory = get_session_factory
+
+
 def get_db_session(
     settings: Annotated[Settings, Depends(get_settings)],
 ) -> Generator[Session, None, None]:

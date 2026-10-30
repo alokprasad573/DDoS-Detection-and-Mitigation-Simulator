@@ -57,26 +57,18 @@ export function AlertsTable({ alerts, onSelectAlert }: AlertsTableProps) {
         <tbody className="divide-y divide-gray-800/80">
           {paginatedAlerts.map((alert) => {
             const formattedTime = formatISTDateTime(alert.timestamp);
-            const rawSev = (alert.severity || "low").toLowerCase();
-            const isCritical = rawSev === "critical";
-            const isHigh = rawSev === "high" || rawSev === "warning";
-            const isMedium = rawSev === "medium";
+            const rawSev = (alert.severity || "low").toLowerCase().trim();
+            const normalizedSev: "critical" | "high" | "medium" | "low" =
+              rawSev === "critical"
+                ? "critical"
+                : rawSev === "high" || rawSev === "warning"
+                ? "high"
+                : rawSev === "medium"
+                ? "medium"
+                : "low";
 
-            const displayLabel = isCritical
-              ? "CRITICAL"
-              : isHigh
-              ? "HIGH"
-              : isMedium
-              ? "MEDIUM"
-              : "LOW";
-
-            const badgeVariant: BadgeVariant = isCritical
-              ? "critical"
-              : isHigh
-              ? "warning"
-              : isMedium
-              ? "cyan"
-              : "normal";
+            const displayLabel = normalizedSev.toUpperCase();
+            const badgeVariant: BadgeVariant = normalizedSev;
 
             return (
               <tr
@@ -109,7 +101,7 @@ export function AlertsTable({ alerts, onSelectAlert }: AlertsTableProps) {
 
                 {/* Severity */}
                 <td className="py-3 px-3">
-                  <Badge variant={badgeVariant} className="text-[10px] px-2 py-0.5">
+                  <Badge variant={badgeVariant} className="text-[10px] px-2.5 py-0.5 font-bold">
                     {displayLabel}
                   </Badge>
                 </td>
@@ -136,12 +128,19 @@ export function AlertsTable({ alerts, onSelectAlert }: AlertsTableProps) {
 
                 {/* Status */}
                 <td className="py-3 px-3">
-                  <Badge
-                    variant={alert.status === "active" ? "warning" : "normal"}
-                    className="text-[10px] uppercase font-mono font-bold"
-                  >
-                    {alert.status === "active" ? "ACTIVE" : "RESOLVED"}
-                  </Badge>
+                  {alert.status === "active" ? (
+                    <Badge variant="warning" className="text-[10px] uppercase font-mono font-bold animate-pulse">
+                      ACTIVE
+                    </Badge>
+                  ) : alert.source_id.startsWith("sim_") || (alert.title && alert.title.toLowerCase().includes("simulation")) ? (
+                    <Badge variant="cyan" className="text-[10px] uppercase font-mono">
+                      HISTORICAL TEST
+                    </Badge>
+                  ) : (
+                    <Badge variant="normal" className="text-[10px] uppercase font-mono">
+                      RESOLVED
+                    </Badge>
+                  )}
                 </td>
 
                 {/* Action */}

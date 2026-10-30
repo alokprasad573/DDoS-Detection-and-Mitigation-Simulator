@@ -7,6 +7,9 @@ export type BadgeVariant =
   | "normal"
   | "warning"
   | "critical"
+  | "high"
+  | "medium"
+  | "low"
   | "info"
   | "outline"
   | "stale";
@@ -28,7 +31,13 @@ const variantStyles: Record<BadgeVariant, string> = {
   warning:
     "bg-amber-500/15 text-amber-400 border-amber-500/40 shadow-[0_0_10px_rgba(245,158,11,0.2)]",
   critical:
-    "bg-rose-500/20 text-rose-300 border-rose-500/50 shadow-[0_0_10px_rgba(239,68,68,0.25)]",
+    "bg-red-500/20 text-red-400 border-red-500/50 shadow-[0_0_10px_rgba(239,68,68,0.25)]",
+  high:
+    "bg-orange-500/20 text-orange-400 border-orange-500/50 shadow-[0_0_10px_rgba(249,115,22,0.25)]",
+  medium:
+    "bg-yellow-500/20 text-yellow-300 border-yellow-500/50 shadow-[0_0_10px_rgba(234,179,8,0.25)]",
+  low:
+    "bg-emerald-500/20 text-emerald-400 border-emerald-500/50 shadow-[0_0_10px_rgba(16,185,129,0.25)]",
   info:
     "bg-[rgba(6,182,212,0.14)] text-[#06B6D4] border-[#06B6D4]/50 shadow-[0_0_10px_rgba(6,182,212,0.2)]",
   outline:

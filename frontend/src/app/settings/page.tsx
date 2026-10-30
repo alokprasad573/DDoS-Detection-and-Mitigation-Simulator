@@ -51,15 +51,7 @@ function ThresholdForm({ initialData, loading, onRefresh }: ThresholdFormProps) 
   const [testPps, setTestPps] = useState<number>(4500);
   const [testRfScore, setTestRfScore] = useState<number>(0.65);
 
-  // Keep local form in sync when initialData loads from backend
-  useEffect(() => {
-    if (initialData) {
-      setPpsThreshold(initialData.pps_threshold);
-      setBpsThreshold(initialData.bps_threshold);
-      setSynPpsThreshold(initialData.syn_pps_threshold);
-      setRfCutoff(initialData.rf_probability_threshold);
-    }
-  }, [initialData]);
+
 
   const handleSaveThresholds = async () => {
     setSaving(true);
@@ -318,7 +310,6 @@ export default function SettingsPage() {
 
   useEffect(() => {
     let ignore = false;
-    setModelLoading(true);
     void Promise.allSettled([api.getModels(), api.getModelMetrics()]).then(
       ([modelsResult, metricsResult]) => {
         if (ignore) return;
@@ -413,6 +404,7 @@ export default function SettingsPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2">
           <ThresholdForm
+            key={thresholdData ? `${thresholdData.pps_threshold}-${thresholdData.bps_threshold}-${thresholdData.syn_pps_threshold}-${thresholdData.rf_probability_threshold}` : "loading"}
             initialData={thresholdData}
             loading={thresholdsLoading}
             onRefresh={refresh}
