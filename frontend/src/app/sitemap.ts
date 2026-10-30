@@ -1,7 +1,12 @@
 import type { MetadataRoute } from "next";
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://sentrix.security";
+  const rawUrl =
+    process.env.BACKEND_URL ||
+    process.env.NEXT_BACKEND_APP_URL || "https://sentrix-bay.vercel.app/";
+  const baseUrl = rawUrl.startsWith("http://") || rawUrl.startsWith("https://")
+    ? rawUrl
+    : `https://${rawUrl}`;
   const now = new Date();
 
   return [

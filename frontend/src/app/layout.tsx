@@ -3,8 +3,8 @@ import { AppShell } from "@/components/layout/AppShell";
 import "./globals.css";
 
 const rawUrl =
-  process.env.NEXT_PUBLIC_APP_URL ||
-  (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "https://sentrix.security");
+  process.env.BACKEND_URL ||
+  process.env.NEXT_BACKEND_APP_URL || "https://sentrix-bay.vercel.app/";
 
 const baseUrl = rawUrl.startsWith("http://") || rawUrl.startsWith("https://")
   ? rawUrl
