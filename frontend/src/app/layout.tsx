@@ -14,7 +14,7 @@ export const viewport: Viewport = {
 export const metadata: Metadata = {
   metadataBase: new URL(baseUrl),
   title: {
-    default: "SENTRIX | Intelligent DDoS Detection & Defense Simulator",
+    default: "SENTRIX | DDoS Detection & Mitigation Simulator",
     template: "%s | SENTRIX Defense",
   },
   description:
