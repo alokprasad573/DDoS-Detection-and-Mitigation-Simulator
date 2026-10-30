@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { AppShell } from "@/components/layout/AppShell";
 import "./globals.css";
 
-const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://sentrix.security";
+const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "";
 
 export const viewport: Viewport = {
   themeColor: "#090D16",
@@ -14,7 +14,7 @@ export const viewport: Viewport = {
 export const metadata: Metadata = {
   metadataBase: new URL(baseUrl),
   title: {
-    default: "SENTRIX | Intelligent DDoS Detection & Defense Platform",
+    default: "SENTRIX | Intelligent DDoS Detection & Defense Simulator",
     template: "%s | SENTRIX Defense",
   },
   description:
