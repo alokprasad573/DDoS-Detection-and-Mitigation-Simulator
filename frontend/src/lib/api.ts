@@ -36,11 +36,13 @@ export * from "@/types";
 const USE_PROXY = process.env.NEXT_PUBLIC_USE_PROXY !== "false";
 const API_BASE_URL = USE_PROXY
   ? "/api/proxy"
-  : process.env.BACKEND_URL ||
+  : process.env.NEXT_PUBLIC_API_URL ||
     process.env.NEXT_BACKEND_API_URL ||
+    process.env.BACKEND_URL ||
     "http://127.0.0.1:8000";
 
 const DEFAULT_AUTH_TOKEN =
+  process.env.NEXT_PUBLIC_API_TOKEN ||
   process.env.NEXT_API_AUTH_TOKEN ||
   process.env.API_AUTH_TOKEN ||
   "";

@@ -2,14 +2,18 @@ import crypto from "crypto";
 import { NextRequest, NextResponse } from "next/server";
 
 // Server-side secret: Never exposed to client bundles
-const BACKEND_URL =
+const rawBackendUrl =
   process.env.BACKEND_URL ||
   process.env.NEXT_BACKEND_API_URL ||
+  process.env.NEXT_PUBLIC_API_URL ||
   "http://127.0.0.1:8000";
+
+const BACKEND_URL = rawBackendUrl.replace(/\/+$/, "");
 
 const API_AUTH_TOKEN =
   process.env.API_AUTH_TOKEN ||
   process.env.NEXT_API_AUTH_TOKEN ||
+  process.env.NEXT_PUBLIC_API_TOKEN ||
   "";
 
 function safeTokenCompare(provided: string, expected: string): boolean {
@@ -109,6 +113,7 @@ async function proxyRequest(
     });
   } catch (err: unknown) {
     const errorMsg = err instanceof Error ? err.message : "Proxy backend unreachable";
+    console.error(`[SENTRIX Proxy Error] Target ${backendTargetUrl} unreachable:`, err);
     return NextResponse.json(
       {
         error: {
