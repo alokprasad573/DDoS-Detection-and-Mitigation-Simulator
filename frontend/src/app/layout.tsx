@@ -2,7 +2,13 @@ import type { Metadata, Viewport } from "next";
 import { AppShell } from "@/components/layout/AppShell";
 import "./globals.css";
 
-const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "";
+const rawUrl =
+  process.env.NEXT_PUBLIC_APP_URL ||
+  (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "https://sentrix.security");
+
+const baseUrl = rawUrl.startsWith("http://") || rawUrl.startsWith("https://")
+  ? rawUrl
+  : `https://${rawUrl}`;
 
 export const viewport: Viewport = {
   themeColor: "#090D16",
@@ -38,43 +44,41 @@ export const metadata: Metadata = {
     locale: "en_US",
     url: baseUrl,
     siteName: "SENTRIX",
-    title: "SENTRIX — Intelligent DDoS Detection & Defense Platform",
+    title: "SENTRIX — DDoS Detection & Mitigation Simulator",
     description:
       "Enterprise real-time HTTP telemetry streaming, adaptive anomaly detection, and automated WAF defensive enforcement.",
   },
   twitter: {
     card: "summary_large_image",
-    title: "SENTRIX — Intelligent DDoS Detection & Defense Platform",
+    title: "SENTRIX — DDoS Detection & Mitigation Simulator",
     description:
       "Enterprise real-time HTTP telemetry streaming, adaptive anomaly detection, and automated WAF defensive enforcement.",
+  },
+  icons: {
+    icon: "/favicon.ico",
   },
   robots: {
     index: true,
     follow: true,
-    googleBot: {
-      index: true,
-      follow: true,
-      "max-video-preview": -1,
-      "max-image-preview": "large",
-      "max-snippet": -1,
-    },
   },
 };
 
 export default function RootLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode;
-}>) {
+}) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body
-        suppressHydrationWarning
-        className="bg-[#090D16] text-[#F3F4F6] antialiased selection:bg-[#00FF9D]/30 selection:text-[#00FF9D]"
-      >
-        <a className="skip-link" href="#main-content">
-          Skip to content
-        </a>
+    <html lang="en" className="dark">
+      <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link
+          rel="preconnect"
+          href="https://fonts.gstatic.com"
+          crossOrigin="anonymous"
+        />
+      </head>
+      <body className="min-h-screen bg-canvas-base text-fg-primary antialiased selection:bg-brand-500/20 selection:text-brand-300">
         <AppShell>{children}</AppShell>
       </body>
     </html>

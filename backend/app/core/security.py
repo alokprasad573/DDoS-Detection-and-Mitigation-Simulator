@@ -1,7 +1,7 @@
 import hmac
 from typing import Annotated
 
-from fastapi import Depends, HTTPException
+from fastapi import Depends, HTTPException, Request
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from starlette import status
 
@@ -11,6 +11,7 @@ _bearer_scheme = HTTPBearer(auto_error=False)
 
 
 def require_api_auth(
+    request: Request,
     credentials: Annotated[
         HTTPAuthorizationCredentials | None,
         Depends(_bearer_scheme),
@@ -25,7 +26,18 @@ def require_api_auth(
         if settings.api_auth_token is not None
         else ""
     )
-    supplied = credentials.credentials if credentials is not None else ""
+    
+    supplied = ""
+    if credentials is not None and credentials.credentials:
+        supplied = credentials.credentials
+    elif request is not None and "x-api-token" in request.headers:
+        supplied = request.headers["x-api-token"]
+    elif request is not None and "authorization" in request.headers:
+        auth_val = request.headers["authorization"]
+        if auth_val.lower().startswith("bearer "):
+            supplied = auth_val[7:].strip()
+        else:
+            supplied = auth_val.strip()
 
     if not expected or not hmac.compare_digest(supplied, expected):
         raise HTTPException(
