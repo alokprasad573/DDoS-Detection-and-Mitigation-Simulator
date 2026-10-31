@@ -172,7 +172,7 @@ export function SimulatorControls({
           <div
             className={`h-full transition-all duration-300 rounded-full ${
               activeRun.status === "running"
-                ? "bg-gradient-to-r from-[#00FF9D] via-[#06B6D4] to-[#EF4444]"
+                ? "bg-linear-to-r from-[#00FF9D] via-[#06B6D4] to-[#EF4444]"
                 : activeRun.status === "completed"
                 ? "bg-[#00FF9D]"
                 : "bg-gray-600"

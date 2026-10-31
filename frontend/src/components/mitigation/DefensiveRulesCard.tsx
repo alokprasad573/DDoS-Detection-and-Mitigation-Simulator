@@ -224,7 +224,7 @@ export function DefensiveRulesCard() {
                       : "outline";
 
                     return (
-                      <tr key={rule.rule_id} className="hover:bg-white/[0.02]">
+                      <tr key={rule.rule_id} className="hover:bg-white/2">
                         <td className="py-2.5 px-3 text-gray-300 font-bold">{rule.rule_id}</td>
                         <td className="py-2.5 px-3 text-[#00FF9D] font-bold">{rule.target_ip_or_cidr}</td>
                         <td className="py-2.5 px-3">

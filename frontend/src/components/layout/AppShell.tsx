@@ -114,7 +114,7 @@ export function AppShell({ children }: AppShellProps) {
                 SENTRIX
               </span>
               <span className="text-[11px] text-gray-400 font-sans leading-none">
-                Traffic Protection & Attack Detection
+                DDoS Detection and Mitigation Simulator
               </span>
             </div>
           </Link>

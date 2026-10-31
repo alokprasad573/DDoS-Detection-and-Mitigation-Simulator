@@ -88,9 +88,13 @@ jobs:
           DEPLOY_HOOK: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
         run: |
           if [ -n "$DEPLOY_HOOK" ]; then
-            echo "Triggering Render backend deploy webhook..."
-            curl -fsS -X POST "$DEPLOY_HOOK"
-            echo "Render backend deploy hook triggered successfully."
+            if [[ "$DEPLOY_HOOK" == *"onrender.com"* && "$DEPLOY_HOOK" != *"api.render.com"* ]]; then
+              echo "::warning::RENDER_DEPLOY_HOOK_URL is set to an onrender.com app URL instead of a Render Deploy Hook (https://api.render.com/deploy/srv-...). Skipping webhook. Render auto-deploys via Git on push."
+            else
+              echo "Triggering Render backend deploy webhook..."
+              curl -fsS -X POST "$DEPLOY_HOOK"
+              echo "Render backend deploy hook triggered successfully."
+            fi
           else
             echo "RENDER_DEPLOY_HOOK_URL not configured. Render automatic Git deploys will take effect on push to main."
           fi
@@ -100,9 +104,13 @@ jobs:
           VERCEL_HOOK: ${{ secrets.VERCEL_DEPLOY_HOOK_URL }}
         run: |
           if [ -n "$VERCEL_HOOK" ]; then
-            echo "Triggering Vercel frontend deploy webhook..."
-            curl -fsS -X POST "$VERCEL_HOOK"
-            echo "Vercel frontend deploy hook triggered successfully."
+            if [[ "$VERCEL_HOOK" == *"vercel.app"* && "$VERCEL_HOOK" != *"api.vercel.com"* ]]; then
+              echo "::warning::VERCEL_DEPLOY_HOOK_URL is set to a vercel.app site URL instead of a Vercel Deploy Hook (https://api.vercel.com/...). Skipping webhook. Vercel auto-deploys via Git on push."
+            else
+              echo "Triggering Vercel frontend deploy webhook..."
+              curl -fsS -X POST "$VERCEL_HOOK"
+              echo "Vercel frontend deploy hook triggered successfully."
+            fi
           else
             echo "VERCEL_DEPLOY_HOOK_URL not configured. Vercel automatic Git deploys will take effect on push to main."
           fi
