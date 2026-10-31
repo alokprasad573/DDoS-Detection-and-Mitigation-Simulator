@@ -71,8 +71,9 @@ def _create_postgres_engine(database_url: str) -> Engine:
     return create_engine(
         database_url,
         connect_args=connect_args,
-        pool_size=5,
-        max_overflow=10,
+        pool_size=3,
+        max_overflow=2,
+        pool_timeout=15,
         pool_pre_ping=True,
         pool_recycle=300,
     )

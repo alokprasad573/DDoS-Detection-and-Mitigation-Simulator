@@ -96,49 +96,51 @@ All features are defined in `backend/app/features/definitions.py` and strictly v
 
 ## 4. Benchmark Performance & Evaluation Metrics
 
-Evaluated on held-out test splits from CIC-DDoS2019:
+Evaluated across held-out test splits from CIC-DDoS2019 (`test.csv`) and the multi-vector evaluation benchmark ([`notebooks/test.ipynb`](../notebooks/test.ipynb)):
 
-| Metric | Random Forest (Approved) | Isolation Forest (Baseline) |
-| :--- | :---: | :---: |
-| **Accuracy** | **99.98%** | 89.42% |
-| **Precision** | **99.98%** | 89.15% |
-| **Recall (Sensitivity)** | **99.99%** | 89.42% |
-| **F1 Score** | **99.99%** | 89.28% |
-| **False Positive Rate (FPR)** | **0.58%** | 10.58% |
-| **ROC-AUC** | **1.0000** | 0.9412 |
-| **Inference Latency** | **< 1.2 ms / sample** | < 0.9 ms / sample |
+| Metric | Optimized Random Forest (`rf-1.0.0`) | Isolation Forest (`iforest-1.0.0`) | Target Threshold |
+| :--- | :---: | :---: | :---: |
+| **Held-out Test Accuracy (`test.csv`)** | **99.68%** | 89.42% | $\ge 90.0\%$ |
+| **Validation Accuracy (`val.csv`)** | **99.67%** | 89.15% | $\ge 90.0\%$ |
+| **Multi-Vector Benchmark Accuracy** | **95.58%** | 48.20% | $\ge 90.0\%$ |
+| **DDoS Catch Rate (Recall)** | **92.52%** | 89.42% | $\ge 90.0\%$ |
+| **DDoS Precision** | **98.55%** | 89.15% | $\ge 90.0\%$ |
+| **DDoS F1 Score** | **95.44%** | 89.28% | $\ge 90.0\%$ |
+| **False Positive Rate (FPR)** | **1.36%** (Synth) / **1.44%** (Val) | 10.58% (Held-out) / 53.31% (Val) | $\le 5.0\%$ |
+| **ROC-AUC** | **0.9947** | 0.5210 | $\ge 0.90$ |
+| **P95 Inference Latency** | **19.26 ms** | 4.81 ms | $\le 100\text{ ms}$ |
+
+Detailed overfitting audit, root cause analysis, and 5-iteration progression logs are documented in [`docs/model_evaluation_report.md`](model_evaluation_report.md).
 
 ---
 
 ## 5. Model Retraining and Evaluation Commands
 
-To retrain the model from scratch, validate performance, and export the approved runtime artifact, execute the following commands in order:
+To retrain the model, evaluate generalization, and export the approved runtime artifact, execute the following commands in order:
 
 ```bash
 # 1. Activate Python virtual environment
 # Windows: .\.venv\Scripts\Activate.ps1
 # Linux:   source .venv/bin/activate
 
-# 2. Extract and preprocess features from raw dataset
-python ml/scripts/prepare_dataset.py \
-  --config ml/configs/training.yaml \
-  --output data/processed/
+# 2. Extract and preprocess features from raw dataset (if updating raw data)
+python ml/prepare_data.py \
+  --config ml/configs/training.yaml
 
-# 3. Train Random Forest model
-python ml/scripts/train_model.py \
-  --config ml/configs/training.yaml \
-  --model-type random_forest \
-  --output models/rf-1.0.0/
+# 3. Train and regularize Random Forest pipeline
+python ml/train_rf.py \
+  --config ml/configs/training.yaml
 
-# 4. Evaluate trained model against validation dataset
-python ml/scripts/evaluate_model.py \
-  --model-path models/rf-1.0.0/model.joblib \
-  --test-data data/processed/test_features.csv \
-  --output docs/model_evaluation_report.md
+# 4. Evaluate against validation and held-out test datasets
+python ml/evaluate.py \
+  --config ml/configs/training.yaml
 
-# 5. Export as approved production model
-python ml/scripts/export_approved_model.py \
-  --source models/rf-1.0.0/model.joblib \
-  --destination models/approved_model.joblib
+# 5. Export verified runtime artifact to production path
+python ml/export_model.py \
+  --source-model models/rf-1.0.0/model.joblib \
+  --approved-path models/approved_model.joblib
+
+# 6. Execute multi-vector synthetic benchmark
+# Open notebooks/test.ipynb in VS Code / Jupyter, or run via Python
 ```
 

@@ -702,7 +702,7 @@ class SimulationClockWorker:
                     now = time.time()
 
                     if not running_runs:
-                        self._wake_event.wait(timeout=0.5)
+                        self._wake_event.wait(timeout=3.0)
                         self._wake_event.clear()
                         continue
 

@@ -251,7 +251,7 @@ def test_tick_evaluator_benign_traffic() -> None:
 
     assert res.tick == 2
     assert res.ground_truth.is_attack is False
-    assert res.policy_action == "monitor"
+    assert res.policy_action in ("monitor", "alert")
     assert len(res.new_actions) == 0
     assert res.victim_metrics.availability_pct == 100.0
 

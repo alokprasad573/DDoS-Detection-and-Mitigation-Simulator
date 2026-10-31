@@ -26,7 +26,7 @@ def require_api_auth(
         if settings.api_auth_token is not None
         else ""
     )
-    
+
     supplied = ""
     if credentials is not None and credentials.credentials:
         supplied = credentials.credentials

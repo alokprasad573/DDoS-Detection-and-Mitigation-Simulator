@@ -126,34 +126,42 @@ export default function HealthPage() {
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2 sm:gap-3 w-full sm:w-auto">
-          <StatusIndicator status={statusType} />
-          {lastUpdated && (
-            <span className="text-xs text-gray-400 font-mono">
-              Updated: {formatISTTime(lastUpdated)} IST
-            </span>
-          )}
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleRefreshAll}
-            disabled={isRefreshing}
-            className="text-xs font-sans w-full xs:w-auto"
-          >
-            <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? "animate-spin text-[#00FF9D]" : ""}`} />
-            {isRefreshing ? "Checking..." : "Check Status"}
-          </Button>
+        <div className="flex flex-col gap-3 w-full sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+  {/* Status and Last Updated Section */}
+  <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+    <StatusIndicator status={statusType} />
+    {lastUpdated && (
+      <span className="text-xs text-gray-400 font-mono">
+        Updated: {formatISTTime(lastUpdated)} IST
+      </span>
+    )}
+  </div>
 
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleDownloadCsv}
-            className="text-xs font-sans w-full xs:w-auto"
-          >
-            <Download className="w-3.5 h-3.5 mr-1 text-[#06B6D4]" />
-            Export Audit Log (CSV)
-          </Button>
-        </div>
+  {/* Action Buttons Section */}
+  <div className="flex flex-col gap-2 xs:flex-row w-full sm:w-auto">
+    <Button
+      variant="outline"
+      size="sm"
+      onClick={handleRefreshAll}
+      disabled={isRefreshing}
+      className="text-xs font-sans w-full xs:w-auto flex items-center justify-center gap-1.5"
+    >
+      <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? "animate-spin text-[#00FF9D]" : ""}`} />
+      {isRefreshing ? "Checking..." : "Check Status"}
+    </Button>
+    
+    <Button
+      variant="outline"
+      size="sm"
+      onClick={handleDownloadCsv}
+      className="text-xs font-sans w-full xs:w-auto flex items-center justify-center gap-1.5"
+    >
+      <Download className="w-3.5 h-3.5 text-[#06B6D4]" />
+      Export Audit Log (CSV)
+    </Button>
+  </div>
+</div>
+
       </div>
 
       {refreshMessage && (

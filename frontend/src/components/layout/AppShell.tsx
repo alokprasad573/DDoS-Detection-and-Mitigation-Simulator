@@ -72,6 +72,25 @@ export function AppShell({ children }: AppShellProps) {
     };
   }, [mobileOpen]);
 
+  // Automatically close mobile drawer when route changes during render
+  const [prevPathname, setPrevPathname] = useState(pathname);
+  if (prevPathname !== pathname) {
+    setPrevPathname(pathname);
+    if (mobileOpen) {
+      setMobileOpen(false);
+    }
+  }
+
+  // Automatically close mobile drawer if screen is resized to desktop breakpoint
+  useEffect(() => {
+    const mql = window.matchMedia("(min-width: 1024px)");
+    const handleMediaChange = (e: MediaQueryListEvent) => {
+      if (e.matches) setMobileOpen(false);
+    };
+    mql.addEventListener("change", handleMediaChange);
+    return () => mql.removeEventListener("change", handleMediaChange);
+  }, []);
+
   const isShieldActive = Boolean(shieldStatus?.shield_active);
   const remainingSec = shieldStatus?.latest_mitigation?.remaining_seconds ?? 0;
 
@@ -89,12 +108,12 @@ export function AppShell({ children }: AppShellProps) {
     >
       {/* Top Header */}
       <header className="app-header" role="banner">
-        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+        <div className="flex items-center gap-1.5 sm:gap-3 min-w-0 shrink">
           <button
             type="button"
             suppressHydrationWarning
             onClick={() => setMobileOpen(!mobileOpen)}
-            className="lg:hidden p-2 min-w-10 min-h-10 flex items-center justify-center shrink-0 rounded-lg bg-[#1F2937]/70 border border-gray-700/60 text-gray-400 hover:text-[#00FF9D] hover:border-[#00FF9D]/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00FF9D] transition-colors"
+            className="lg:hidden p-1.5 sm:p-2 w-9 h-9 sm:w-10 sm:h-10 min-w-9 min-h-9 sm:min-w-10 sm:min-h-10 flex items-center justify-center shrink-0 rounded-lg bg-[#1F2937]/70 border border-gray-700/60 text-gray-400 hover:text-[#00FF9D] hover:border-[#00FF9D]/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00FF9D] transition-colors"
             aria-label="Toggle Navigation Menu"
             aria-expanded={mobileOpen}
             aria-controls="mobile-navigation-drawer"
@@ -102,7 +121,7 @@ export function AppShell({ children }: AppShellProps) {
             <Menu className="w-5 h-5" />
           </button>
 
-          <Link className="brand group shrink-0 min-w-0" href="/overview">
+          <Link className="brand group min-w-0 shrink" href="/overview">
             <span
               className="brand-mark shrink-0 group-hover:shadow-[0_0_20px_rgba(0,255,157,0.45)] transition-shadow"
               aria-hidden="true"
@@ -110,35 +129,43 @@ export function AppShell({ children }: AppShellProps) {
               S
             </span>
             <div className="flex flex-col min-w-0">
-              <span className="text-gray-100 font-bold tracking-widest text-base sm:text-lg font-mono flex items-center gap-2">
+              <span className="text-gray-100 font-bold tracking-wider sm:tracking-widest text-sm sm:text-base md:text-lg font-mono flex items-center gap-2 truncate">
                 SENTRIX
               </span>
-              <span className="text-[11px] text-gray-400 font-sans leading-none hidden sm:inline truncate max-w-55 md:max-w-none">
+              <span className="text-[11px] text-gray-400 font-sans leading-none hidden lg:inline truncate max-w-64 xl:max-w-none">
                 DDoS Detection and Mitigation Simulator
               </span>
             </div>
           </Link>
         </div>
 
-        <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+        <div className="flex items-center gap-1.5 sm:gap-3 shrink-0 ml-auto">
           {/* Synchronized Defense Shield Global Pill */}
           <Link
             href="/protection"
-            className={`inline-flex items-center gap-1.5 sm:gap-2 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full text-[11px] sm:text-xs font-mono transition-all border shrink-0 ${
+            aria-label={isShieldActive ? `Defense Shield Active: ${remainingSec} seconds remaining` : "Defense Shield Standby"}
+            className={`inline-flex items-center gap-1.5 sm:gap-2 px-2 py-1 sm:px-3 sm:py-1.5 rounded-full text-[11px] sm:text-xs font-mono transition-all border shrink-0 ${
               isShieldActive
                 ? "bg-[rgba(0,255,157,0.15)] border-[#00FF9D]/60 text-[#00FF9D] shadow-[0_0_14px_rgba(0,255,157,0.35)]"
                 : "bg-[#1F2937]/70 border-gray-700/60 text-gray-300 hover:text-white hover:border-gray-600"
             }`}
           >
             <Shield className={`w-3.5 h-3.5 shrink-0 ${isShieldActive ? "text-[#00FF9D] animate-pulse" : "text-[#06B6D4]"}`} />
-            <span className="font-bold tracking-tight">
-              <span className="hidden xs:inline">SHIELD: </span>
-              {isShieldActive ? `ACTIVE (${remainingSec}s)` : "STANDBY"}
+            <span className="font-bold tracking-tight whitespace-nowrap">
+              <span className="hidden sm:inline">SHIELD: </span>
+              {isShieldActive ? (
+                <>
+                  <span className="hidden min-[380px]:inline">ACTIVE </span>
+                  <span>({remainingSec}s)</span>
+                </>
+              ) : (
+                <span>STANDBY</span>
+              )}
             </span>
           </Link>
 
           {/* Operational status badge */}
-          <span className="mode-badge hidden md:inline-flex">
+          <span className="mode-badge hidden lg:inline-flex">
             <span className="inline-block w-2 h-2 rounded-full bg-[#00FF9D] animate-pulse shadow-[0_0_8px_#00FF9D]" />
             DEFENSE ENGINE ARMED
           </span>
@@ -236,8 +263,8 @@ export function AppShell({ children }: AppShellProps) {
             onClick={() => setMobileOpen(false)}
             aria-hidden="true"
           />
-          <div className="relative w-72 max-w-[85vw] bg-[#090D16] border-r border-gray-700/60 p-4 flex flex-col z-10 shadow-2xl h-full max-h-screen">
-            <div className="flex items-center justify-between pb-4 border-b border-gray-800 mb-4 shrink-0">
+          <div className="relative w-72 max-w-[85vw] bg-[#090D16] border-r border-gray-700/60 p-4 flex flex-col z-10 shadow-2xl h-full max-h-screen overflow-hidden">
+            <div className="flex items-center justify-between pb-3 border-b border-gray-800 mb-4 shrink-0">
               <span className="font-mono text-sm font-bold text-gray-100 flex items-center gap-2">
                 <span className="brand-mark w-7 h-7 text-xs" aria-hidden="true">S</span>
                 SENTRIX
@@ -245,14 +272,14 @@ export function AppShell({ children }: AppShellProps) {
               <button
                 type="button"
                 onClick={() => setMobileOpen(false)}
-                className="text-gray-400 hover:text-white p-1 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00FF9D]"
+                className="text-gray-400 hover:text-white p-2 rounded-lg min-w-10 min-h-10 flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00FF9D]"
                 aria-label="Close navigation drawer"
               >
                 <XCircle className="w-5 h-5" />
               </button>
             </div>
 
-            <nav aria-label="Mobile Navigation Links" className="space-y-1 overflow-y-auto flex-1 overscroll-contain pr-1">
+            <nav aria-label="Mobile Navigation Links" className="space-y-1.5 overflow-y-auto flex-1 overscroll-contain pr-1">
               {NAV_ROUTES.map((route) => {
                 const active = isRouteActive(route.href);
                 const Icon = route.icon;
@@ -264,19 +291,19 @@ export function AppShell({ children }: AppShellProps) {
                     onClick={() => setMobileOpen(false)}
                     className={`flex items-center justify-between gap-3 px-3 py-2.5 rounded-xl transition-all min-h-11 ${
                       active
-                        ? "bg-[#00FF9D]/15 border border-[#00FF9D]/40 text-[#00FF9D]"
-                        : "text-gray-400 hover:bg-[#1F2937]/60 hover:text-white"
+                        ? "bg-[#00FF9D]/15 border border-[#00FF9D]/40 text-[#00FF9D] shadow-[0_0_15px_rgba(0,255,157,0.1)]"
+                        : "text-gray-300 hover:bg-[#1F2937]/70 hover:text-white border border-transparent"
                     }`}
                   >
-                    <div className="flex items-center gap-3">
-                      <Icon className="w-4 h-4 shrink-0" />
-                      <div className="flex flex-col text-left">
-                        <span className="text-xs font-semibold">{route.label}</span>
-                        <span className="text-[10px] text-gray-400/80 font-mono">{route.sublabel}</span>
+                    <div className="flex items-center gap-3 min-w-0">
+                      <Icon className={`w-4 h-4 shrink-0 ${active ? "text-[#00FF9D]" : "text-gray-400"}`} />
+                      <div className="flex flex-col text-left min-w-0">
+                        <span className="text-xs font-semibold truncate">{route.label}</span>
+                        <span className="text-[10px] text-gray-400 font-mono truncate">{route.sublabel}</span>
                       </div>
                     </div>
                     {route.badge && (
-                      <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-[#00FF9D]/20 text-[#00FF9D] border border-[#00FF9D]/40">
+                      <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-[#00FF9D]/20 text-[#00FF9D] border border-[#00FF9D]/40 shrink-0">
                         {route.badge}
                       </span>
                     )}

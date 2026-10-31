@@ -13,11 +13,20 @@ paths:
 hyperparameters:
   random_forest:
     n_estimators: 100
-    max_depth: 15
-    min_samples_split: 5
-    class_weight: "balanced"
-    n_jobs: 1
+    max_depth: 8
+    min_samples_split: 4
+    min_samples_leaf: 2
+    class_weight: "balanced_subsample"
+    max_features: "sqrt"
+    n_jobs: -1
     random_state: 42
+    feature_selection:
+      - "Total Length of Fwd Packets"
+      - "Flow Bytes/s"
+      - "Fwd IAT Total"
+      - "Fwd Packets/s"
+      - "Subflow Fwd Packets"
+      - "Idle Mean"
   isolation_forest:
     n_estimators: 100
     max_samples: 256
