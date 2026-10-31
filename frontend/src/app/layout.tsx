@@ -2,9 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { AppShell } from "@/components/layout/AppShell";
 import "./globals.css";
 
-const rawUrl =
-  process.env.BACKEND_URL ||
-  process.env.NEXT_BACKEND_APP_URL || "https://sentrix-bay.vercel.app/";
+const rawUrl = process.env.NEXT_PUBLIC_API_URL || "https://sentrix-bay.vercel.app/";
 
 const baseUrl = rawUrl.startsWith("http://") || rawUrl.startsWith("https://")
   ? rawUrl

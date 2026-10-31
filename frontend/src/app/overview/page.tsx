@@ -360,7 +360,7 @@ export default function OverviewPage() {
         <div className="p-4 rounded-xl border border-red-500/40 bg-red-500/15 text-[#EF4444] flex items-center gap-3 text-sm font-mono">
           <AlertTriangle className="w-5 h-5 text-[#EF4444] shrink-0" />
           <span>
-            The backend API is currently unreachable. Ensure the backend server is running on port 8000.
+            The backend API is currently unreachable. If running locally, ensure backend is running on port 8000; if deployed to Render, verify the service is awake and active.
           </span>
         </div>
       )}
