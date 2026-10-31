@@ -2,14 +2,14 @@
 
 **System Name:** SENTRIX (Secure Enterprise Network Telemetry & Real-Time Incident X-Defend)  
 **Version:** 2.0.0 (Cloud-Agnostic Release)  
-**Scope:** Developer Setup, SOC Operator Workflows, Attack Simulation, and Testing.
+**Scope:** Developer Setup, SOC Operator Workflows, Attack Simulation, and Testing.  
 
 ---
 
 ## 1. System Requirements & Prerequisites
 
 - **Python:** 3.10 to 3.12 (CPython)
-- **Node.js:** 20.x or 22.x LTS with npm / pnpm
+- **Node.js:** 20.x or 22.x LTS with npm
 - **Git**
 - **Docker & Docker Compose** (Optional, for containerized run)
 - **PowerShell / Bash / curl** (for traffic telemetry generation and API testing)
@@ -34,6 +34,7 @@ docker compose logs -f
 - **SOC Web Dashboard:** [http://localhost:3000](http://localhost:3000)
 - **Backend API Docs (Swagger):** [http://localhost:8000/docs](http://localhost:8000/docs)
 - **Health Check:** [http://localhost:8000/api/v1/health](http://localhost:8000/api/v1/health)
+- **Liveness Probe:** [http://localhost:8000/healthz](http://localhost:8000/healthz)
 
 To stop the containers:
 ```bash
@@ -55,8 +56,8 @@ docker compose down
 
 2. **Install backend dependencies in editable mode:**
    ```bash
-   pip install --upgrade pip setuptools wheel
-   pip install -e backend
+   python -m pip install --upgrade pip setuptools wheel
+   python -m pip install -e "backend[dev]"
    ```
 
 3. **Run database migrations:**
@@ -72,8 +73,8 @@ docker compose down
 
 5. **Verify backend health:**
    ```bash
-   curl http://127.0.0.1:8000/api/v1/health
-   # Returns: {"status":"healthy", "database":"connected", ...}
+   curl -H "Authorization: Bearer <API_AUTH_TOKEN>" http://127.0.0.1:8000/api/v1/health
+   # Returns: {"status":"ok"}
    ```
 
 ---
@@ -83,7 +84,7 @@ docker compose down
 1. **Install Node dependencies:**
    ```bash
    cd frontend
-   npm install
+   npm ci
    ```
 
 2. **Launch the development server:**
@@ -98,21 +99,20 @@ docker compose down
 
 ## 4. Operational Demonstrations & Scenarios
 
-SENTRIX includes dedicated SOC operator views:
+SENTRIX includes 7 dedicated SOC operator views:
 - **`/overview`:** Real-time pulse, active threat status, traffic summary, and quick shield control.
 - **`/detection`:** Attack detection center, live threat classification, and flagged security events.
 - **`/models`:** Machine Learning model health, benchmark metrics, and interactive flow predictor.
 - **`/protection`:** Firewall defense shield, staged dry-run rules, and Nginx/Caddy config exporter.
 - **`/simulator`:** Isolated Cyber Range lab for synthetic volumetric and application-layer chaos attacks.
-- **`/health`:** Service status, database connectivity verification, and audit logs.
-- **`/history`:** Regulatory compliance audit trail logging every detection and mitigation event.
+- **`/health`:** Service status, database connectivity verification, and the append-only Audit Ledger.
 - **`/settings`:** Policy configuration matrix, EWMA sensitivity thresholds, and emergency kill-switch.
 
 ---
 
 ### Scenario A: Inject Legitimate Traffic (Normal Baseline)
 
-Stream legitimate requests from multiple client IPs:
+Stream legitimate requests from multiple client IPs into `/api/v1/telemetry/ingress`:
 
 ```powershell
 1..40 | ForEach-Object {
@@ -131,15 +131,15 @@ Stream legitimate requests from multiple client IPs:
         )
     } | ConvertTo-Json -Depth 5
 
-    Invoke-RestMethod -Uri "http://127.0.0.1:8000/api/v1/telemetry/ingress" -Method Post -Body $body -ContentType "application/json"
+    Invoke-RestMethod -Uri "http://127.0.0.1:8000/api/v1/telemetry/ingress" -Method Post -Body $body -ContentType "application/json" -Headers @{ Authorization = "Bearer 7c4e9f2b1a8d3f6cf1b2c3d4e5f60789" }
     Start-Sleep -Milliseconds 80
 }
 ```
 
 **What you will observe:**
-- In **Live Telemetry** (`/telemetry`): Balanced requests per second, low P95 latency (<45ms), 100% 2xx status codes, and Shannon entropy $\eta \approx 0.85-0.95$.
-- In **Attack Detection** (`/detection`): Status displays **NORMAL TRAFFIC** with Z-scores within nominal ranges ($|Z| < 1.5$).
 - In **Overview** (`/overview`): System pulse shows green "ALL TRAFFIC LOOKS NORMAL".
+- In **Attack Detection** (`/detection`): Status displays **BENIGN** with Z-scores within nominal ranges ($|Z| < 1.5$).
+- In **Live Telemetry** (`/api/v1/telemetry/summary`): Balanced requests per second, low P95 latency (<45ms), 100% 2xx status codes, and Shannon entropy ratio $\eta \approx 0.85-0.95$.
 
 ---
 
@@ -163,14 +163,14 @@ Simulate a high-rate volumetric attack targeting search endpoints:
         )
     } | ConvertTo-Json -Depth 5
 
-    Invoke-RestMethod -Uri "http://127.0.0.1:8000/api/v1/telemetry/ingress" -Method Post -Body $body -ContentType "application/json"
+    Invoke-RestMethod -Uri "http://127.0.0.1:8000/api/v1/telemetry/ingress" -Method Post -Body $body -ContentType "application/json" -Headers @{ Authorization = "Bearer 7c4e9f2b1a8d3f6cf1b2c3d4e5f60789" }
 }
 ```
 
 **What you will observe:**
-- In **Live Telemetry** (`/telemetry`): Error rate surges above 50%, latency P95 spikes past 2500ms, and Shannon entropy collapses ($\eta < 0.25$).
 - In **Attack Detection** (`/detection`): Banner turns critical: **VOLUMETRIC HTTP FLOOD DETECTED**. Velocity indicators show $Z_{rps} \ge 3.5$ and $Z_{lat} \ge 3.0$.
-- In **Attack Detection Events** (`/detection`): A permanent incident is logged with severity `CRITICAL` and root-cause metrics.
+- In **Security Events Table** (`/detection`): An alert is logged with severity `CRITICAL` and root-cause metrics.
+- In **Live Telemetry** (`/overview`): Error rate surges above 50%, latency P95 spikes past 2500ms, and Shannon entropy collapses ($\eta < 0.25$).
 
 ---
 
@@ -194,7 +194,7 @@ Simulate a sudden marketing promotion surge where dozens of genuine users visit 
         )
     } | ConvertTo-Json -Depth 5
 
-    Invoke-RestMethod -Uri "http://127.0.0.1:8000/api/v1/telemetry/ingress" -Method Post -Body $body -ContentType "application/json"
+    Invoke-RestMethod -Uri "http://127.0.0.1:8000/api/v1/telemetry/ingress" -Method Post -Body $body -ContentType "application/json" -Headers @{ Authorization = "Bearer 7c4e9f2b1a8d3f6cf1b2c3d4e5f60789" }
 }
 ```
 
@@ -227,23 +227,51 @@ respond @blocked 403
 
 ---
 
-## 5. Integrating with Your Own Web Application
+## 5. Integrating External Web Applications
 
-SENTRIX provides ASGI middleware for FastAPI and Starlette apps.
+External web applications stream telemetry to SENTRIX via standard HTTP POST calls to `/api/v1/telemetry/ingress`. Here is an example integration using standard Python `httpx`:
 
 ```python
-from fastapi import FastAPI
-from app.integrations.middleware import SentrixTelemetryMiddleware
+import time
+import httpx
+from fastapi import FastAPI, Request
 
 app = FastAPI()
+SENTRIX_INGRESS_URL = "http://127.0.0.1:8000/api/v1/telemetry/ingress"
+SENTRIX_AUTH_TOKEN = "your-api-auth-token"
 
-app.add_middleware(
-    SentrixTelemetryMiddleware,
-    sentrix_url="http://127.0.0.1:8000",
-    batch_size=50,
-    flush_interval_seconds=1.0,
-    api_token="your-api-token-if-configured",
-)
+@app.middleware("http")
+async def forward_telemetry_to_sentrix(request: Request, call_next):
+    start_time = time.time()
+    response = await call_next(request)
+    duration_ms = (time.time() - start_time) * 1000
+
+    # Asynchronously forward telemetry in the background
+    payload = {
+        "items": [
+            {
+                "client_ip": request.client.host if request.client else "127.0.0.1",
+                "method": request.method,
+                "path": request.url.path,
+                "status_code": response.status_code,
+                "response_time_ms": duration_ms,
+                "bytes_sent": int(response.headers.get("content-length", 0)),
+            }
+        ],
+        "anonymize_ips": True,
+    }
+
+    try:
+        async with httpx.AsyncClient(timeout=0.2) as client:
+            await client.post(
+                SENTRIX_INGRESS_URL,
+                json=payload,
+                headers={"Authorization": f"Bearer {SENTRIX_AUTH_TOKEN}"},
+            )
+    except Exception:
+        pass  # Never block user requests on telemetry failures
+
+    return response
 ```
 
 Every incoming request is asynchronously buffered, anonymized to `/24` or `/48` CIDR blocks for privacy, and forwarded to the SENTRIX detection core.
@@ -262,7 +290,7 @@ Every incoming request is asynchronously buffered, anonymized to `/24` or `/48` 
 | `backend/app/mitigation/` | Virtual shield, leaky-bucket limiter & config exporters |
 | `backend/app/simulator/` | Isolated Cyber Range attack simulation engine |
 | `backend/app/storage/` | SQLAlchemy models, repositories & audit logging |
-| `frontend/src/app/` | Next.js 16 App Router pages (overview, telemetry, threats, etc.) |
+| `frontend/src/app/` | Next.js 16 App Router pages (overview, detection, models, protection, simulator, health, settings) |
 | `frontend/src/components/`| Reusable SOC UI components |
 | `frontend/src/lib/api.ts` | Type-safe REST client for SENTRIX backend |
 | `models/` | Trained Machine Learning model artifacts (`rf-1.0.0`) |

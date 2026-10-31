@@ -2,8 +2,9 @@
 
 **Module Version:** 1.0.0  
 **Feature Schema Version:** `1.0.0`  
-**Approved Production Model:** `models/rf-1.0.0/model.joblib` (Random Forest Ensemble)  
-**Dataset:** CIC-DDoS2019 Benchmark Dataset
+**Approved Production Model:** `models/rf-1.0.0/model.joblib` (ColumnTransformer + Regularized Random Forest Pipeline)  
+**Active Production Artifact:** `models/approved_model.joblib`  
+**Dataset:** CIC-DDoS2019 Benchmark Dataset  
 
 ---
 
@@ -11,7 +12,7 @@
 
 The SENTRIX Machine Learning pipeline provides autonomous, sub-second classification of network traffic flows to detect volumetric, protocol, and application-layer DDoS attacks.
 
-The pipeline is designed with **100% strict schema parity**: the 14 network flow features extracted during live telemetry sliding windows match the exact feature set, column ordering, and data transformations used during offline training.
+The pipeline is engineered with **100% strict schema parity**: the 14 network flow features extracted during live telemetry sliding windows match the exact feature set, column ordering, and data transformations used during offline training.
 
 ```mermaid
 flowchart TD
@@ -26,8 +27,8 @@ flowchart TD
     end
 
     subgraph Training_Evaluation["2. Model Training & Validation"]
-        Manifest --> Split["Train / Validation Split (80/20)"]
-        Split --> RF_Train["Random Forest Classifier (100 Trees, Depth 15)"]
+        Manifest --> Split["Train / Validation / Test Split"]
+        Split --> RF_Train["Random Forest Pipeline (ColumnTransformer + RF)"]
         Split --> IF_Train["Isolation Forest (Unsupervised Baseline)"]
         
         RF_Train --> Evaluator["Cross-Validation & Metric Evaluation"]
@@ -80,23 +81,29 @@ All features are defined in `backend/app/features/definitions.py` and strictly v
 
 ## 3. Model Architecture & Selection
 
-### 3.1 Primary Classifier: Random Forest Ensemble
+### 3.1 Primary Classifier: Regularized Random Forest Pipeline (`rf-1.0.0`)
+- **Pipeline Architecture:** `scikit-learn.pipeline.Pipeline` with an internal `ColumnTransformer` feature selector feeding a regularized `RandomForestClassifier`.
+- **Feature Selection:** Focuses on 6 invariant physical flow dynamics (`Total Length of Fwd Packets`, `Flow Bytes/s`, `Fwd IAT Total`, `Fwd Packets/s`, `Subflow Fwd Packets`, `Idle Mean`). Shielding the trees from dataset-specific shortcut artifacts (`Bwd Packet Length Max` being 0 in unidirectional reflection captures) prevents shortcut learning and guarantees high generalization on bidirectional multi-vector traffic.
 - **Estimators (`n_estimators`):** 100 decision trees.
-- **Max Depth (`max_depth`):** 15 levels (prevents memorization/overfitting).
-- **Class Weighting (`class_weight`):** `"balanced"` to adjust for class imbalance.
+- **Max Depth (`max_depth`):** 8 levels (prevents tree memorization of noise).
+- **Minimum Samples Leaf (`min_samples_leaf`):** 2 samples.
+- **Minimum Samples Split (`min_samples_split`):** 4 samples.
+- **Class Balancing (`class_weight`):** `"balanced_subsample"` (recomputes inverse class weights per bootstrap tree).
+- **Max Features (`max_features`):** `"sqrt"`.
 - **Random Seed (`random_state`):** 42 (ensures deterministic reproducibility).
 - **Output:** Calibrated threat probability score $[0.0, 1.0]$ with `score_type = "random_forest_probability"`.
 
-### 3.2 Unsupervised Baseline: Isolation Forest
+### 3.2 Unsupervised Baseline: Isolation Forest (`iforest-1.0.0` — Rejected)
 - **Contamination:** 0.10.
 - **Estimators:** 100 trees.
 - **Score:** Continuous anomaly score where values $< 0.2664$ indicate anomalous outliers.
+- **Evaluation Status:** **Rejected** due to a high $53.31\%$ false positive rate on validation traffic (misclassifies normal bursty user browsing as malicious).
 
 ---
 
 ## 4. Benchmark Performance & Evaluation Metrics
 
-Evaluated across held-out test splits from CIC-DDoS2019 (`test.csv`) and the multi-vector evaluation benchmark ([`notebooks/test.ipynb`](../notebooks/test.ipynb)):
+Evaluated across held-out test splits from CIC-DDoS2019 (`test.csv`, 40,000 flows), validation split (`val.csv`, 40,000 flows), and the multi-vector synthetic stream benchmark ([`notebooks/test.ipynb`](../notebooks/test.ipynb)):
 
 | Metric | Optimized Random Forest (`rf-1.0.0`) | Isolation Forest (`iforest-1.0.0`) | Target Threshold |
 | :--- | :---: | :---: | :---: |
@@ -141,6 +148,6 @@ python ml/export_model.py \
   --approved-path models/approved_model.joblib
 
 # 6. Execute multi-vector synthetic benchmark
-# Open notebooks/test.ipynb in VS Code / Jupyter, or run via Python
+# Open notebooks/test.ipynb in VS Code / Jupyter, or run via Python:
+python -c "import nbformat; from nbconvert.preprocessors import ExecutePreprocessor; ep = ExecutePreprocessor(timeout=600); nb = nbformat.read('notebooks/test.ipynb', as_version=4); ep.preprocess(nb, {'metadata': {'path': 'notebooks/'}}); print('Benchmark completed successfully')"
 ```
-

@@ -276,7 +276,7 @@ Stores metadata and configurations for chaos testing experiments in the Cyber Ra
 | :--- | :--- | :---: | :---: | :--- |
 | `id` | `INTEGER` | No | `PRIMARY KEY` | Auto-incrementing identifier. |
 | `run_id` | `VARCHAR(64)` | No | `UNIQUE`, `INDEX` | Unique simulation run identifier (`sim_<hex12>`). |
-| `scenario_type`| `VARCHAR(32)` | No | `INDEX` | Scenario: `syn_flood`, `udp_amplification`, `http_flood`, `flash_crowd`. |
+| `scenario_type`| `VARCHAR(32)` | No | `INDEX` | Scenario: `syn_flood`, `udp_flood`, `http_flood`, `low_and_slow`, `mixed`, `flash_crowd`. |
 | `scenario_version`| `VARCHAR(16)`| No | Default `1.0.0` | Scenario definition version. |
 | `model_version`| `VARCHAR(32)` | No | Default `rf-1.0.0` | ML model evaluated during the run. |
 | `schema_version`| `VARCHAR(16)`| No | Default `1.0.0` | Feature schema version. |

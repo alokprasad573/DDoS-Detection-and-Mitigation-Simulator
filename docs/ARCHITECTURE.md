@@ -8,21 +8,19 @@
 
 ## 1. High-Level Architecture Overview
 
-SENTRIX is an autonomous, real-time DDoS detection, monitoring, and defensive mitigation platform. It combines live HTTP telemetry streaming, adaptive statistical anomaly baselining (EWMA), explainable multi-tier threat classification, and staged defensive mitigation enforcement to safeguard web applications from malicious denial-of-service campaigns without harming legitimate visitors.
+SENTRIX is an autonomous, real-time DDoS detection, monitoring, and defensive mitigation platform. It combines live HTTP telemetry streaming, adaptive statistical anomaly baselining (EWMA), explainable multi-tier threat classification, an approved Machine Learning model, and staged defensive mitigation enforcement to safeguard web applications from malicious denial-of-service campaigns without harming legitimate visitors.
 
 ```mermaid
 flowchart TD
     subgraph Traffic_Layer["1. Ingress & Telemetry Ingestion Tier"]
         Clients["Web Visitors / Attackers"]
         ReverseProxy["Reverse Proxy (Nginx / Caddy / Cloudflare)"]
-        ASGIMiddleware["SENTRIX ASGI Middleware (FastAPI / Starlette)"]
-        IngressAPI["Telemetry Ingress API (/api/v1/telemetry)"]
+        IngressAPI["Telemetry Ingress API (/api/v1/telemetry/ingress)"]
         LogParser["Log Parser (Combined, CLF, JSON)"]
         PrivacyMasker["GDPR Privacy Masker (/24 IPv4, /48 IPv6)"]
 
         Clients --> ReverseProxy
         ReverseProxy --> IngressAPI
-        ASGIMiddleware --> IngressAPI
         IngressAPI --> LogParser
         LogParser --> PrivacyMasker
     end
@@ -44,7 +42,7 @@ flowchart TD
     subgraph Detection_Layer["3. Dual-Signal Detection & Intelligence Tier"]
         EWMA["Adaptive Baseline Tracker (EWMA Mean μ_t, Variance σ_t^2)"]
         ZScore["Velocity Shift Engine (Z_rps, Z_err, Z_lat)"]
-        MLModel["Random Forest ML Classifier (rf-1.0.0, 14 Features)"]
+        MLModel["Random Forest Pipeline (rf-1.0.0, ColumnTransformer + RF)"]
         ThreatClassifier["Explainable Multi-Tier Threat Classifier"]
         FlashCrowdDiff{"Flash Crowd Differentiator"}
 
@@ -123,7 +121,7 @@ flowchart TD
 
 ## 2. Ingestion & Sliding-Window Feature Pipeline
 
-The telemetry ingress pipeline accepts both pre-aggregated metric objects and raw server logs. 
+The telemetry ingress pipeline accepts both pre-aggregated metric objects and raw server access logs via `POST /api/v1/telemetry/ingress`.
 
 ```mermaid
 sequenceDiagram
@@ -134,7 +132,7 @@ sequenceDiagram
     participant Agg as TelemetryAggregator
     participant Deque as Thread-Safe Circular Deque
 
-    Proxy->>API: POST /api/v1/telemetry/ingress (Batch or Logs)
+    Proxy->>API: POST /api/v1/telemetry/ingress (Batch or Raw Logs)
     API->>Parser: Parse lines (Combined / CLF / JSON)
     Parser->>Parser: Mask IP (/24 IPv4, /48 IPv6)
     Parser-->>API: List[RequestTelemetryItem]
@@ -142,10 +140,10 @@ sequenceDiagram
     Agg->>Deque: Acquire Lock & Append Items
     Agg->>Deque: Evict items older than (now - 60s)
     Agg->>Agg: Compute RPS, Throughput, Error Rates
-    Agg->>Agg: Compute Latency Percentiles (p50, p90, p99)
+    Agg->>Agg: Compute Latency Percentiles (p50, p90, p95, p99)
     Agg->>Agg: Compute Shannon Entropy H(X) & Ratio η
     Agg-->>API: Summary Cache Updated
-    API-->>Proxy: HTTP 202 Accepted {ingested: N}
+    API-->>Proxy: HTTP 202 Accepted {accepted_count: N}
 ```
 
 ### Mathematical Definitions:
@@ -180,8 +178,8 @@ flowchart LR
 
     subgraph Classifier_Rules["Threat Evaluation Matrix"]
         R1["Z_rps ≥ 3.0 & η ≤ 0.40 & Err ≥ 15% ➔ VOLUMETRIC_HTTP_FLOOD"]
-        R2["Z_lat ≥ 3.0 & Low RPS ➔ SLOWLORIS_EXHAUSTION"]
-        R3["Z_err ≥ 3.0 on /login ➔ CREDENTIAL_STUFFING"]
+        R2["Z_lat ≥ 3.0 & Low RPS ➔ SLOWLORIS_CONNECTION_EXHAUSTION"]
+        R3["Z_err ≥ 3.0 on /login ➔ CREDENTIAL_STUFFING_ERROR_BURST"]
         R4["Z_rps ≥ 2.0 & η ≥ 0.75 & Err < 10% ➔ FLASH_CROWD (ALLOW)"]
     end
 
@@ -237,13 +235,21 @@ stateDiagram-v2
     Expired --> [*]
 ```
 
+### Distinction Between Simulated and Real-World Mitigation:
+1. **Simulated Cyber Range Mitigation:** In the Cyber Range simulator (`/simulator`), all mitigation actions, queue latencies, packet drops, and scorecard calculations execute exclusively inside an in-memory virtual victim model (`VirtualVictimConfig` and `VirtualVictim`). No host networking stack, sockets, or kernel rules are modified.
+2. **Application-Layer Defensive Mitigation:** In the live platform (`/protection`), SENTRIX implements:
+   - **Staged Dry-Run Mode:** Evaluates rule consequences in memory and tallies `simulated_blocked_count` without dropping live packets.
+   - **In-App Leaky-Bucket Rate Limiter:** Enforces per-client IP token rate limits for incoming HTTP requests to the FastAPI application itself.
+   - **Firewall Config Exporters:** Generates drop-in production-grade configuration blocks for external edge proxies (**Nginx** `limit_req_zone` and **Caddy** `@blocked`).
+   - *Note on Kernel Packet Dropping:* Live wire-speed kernel packet dropping (eBPF/XDP) is not currently implemented; it is an active architectural roadmap objective.
+
 ---
 
 ## 5. Security & Safety Invariants
 
-1. **Allowlist Invariant:** Critical infrastructure (`127.0.0.1`, `10.0.0.0/8`, `172.16.0.0/12`, `192.168.0.0/16`, and healthcheck probes) can never be blocked. The engine enforces an immutable whitelist validation gate.
+1. **Allowlist Invariant:** Critical infrastructure (`127.0.0.1`, `10.0.0.0/8`, `172.16.0.0/12`, `192.168.0.0/16`, and healthcheck probes) can never be blocked. The engine enforces an immutable whitelist validation gate (`is_protected_target`).
 2. **Dry-Run by Default:** Newly proposed rules start in `DRY_RUN` mode. No traffic is actively dropped until an authenticated SOC operator explicitly approves the rule.
-3. **Mandatory Rule TTL:** Every rule has an enforced expiration timestamp (default 300s). Expired rules are automatically purged by background cleanup to prevent indefinite blacklisting.
-4. **Emergency Kill-Switch:** A global emergency switch (`set_emergency_disabled(True)`) bypasses all active mitigations in sub-millisecond execution time.
-5. **Privacy by Default:** Raw IP addresses ingested into the telemetry pipeline are automatically masked to `/24` or `/48` subnets before storage or aggregation, ensuring compliance with privacy regulations.
+3. **Mandatory Rule TTL:** Every rule has an enforced expiration timestamp (default 300s, max 3600s). Expired rules are automatically purged by background cleanup to prevent indefinite blacklisting.
+4. **Emergency Kill-Switch:** A global emergency switch (`is_emergency_disabled()`) bypasses all active mitigations in sub-millisecond execution time.
+5. **Privacy by Default:** Raw IP addresses ingested into the telemetry pipeline are automatically masked to `/24` (IPv4) or `/48` (IPv6) subnets before storage or aggregation, ensuring compliance with privacy regulations.
 6. **Immutable Audit Ledger:** Every rule proposal, approval, revocation, and automated threat alert writes an append-only record to `AuditEventModel`.

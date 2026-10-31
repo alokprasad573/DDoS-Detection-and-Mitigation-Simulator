@@ -1,6 +1,6 @@
 # SENTRIX — Testing & Quality Assurance Guide
 
-**Scope:** Unit Tests, Integration Tests, End-to-End Pipeline Verification, Static Analysis, and Frontend Quality Audits.
+**Scope:** Unit Tests, Integration Tests, End-to-End Pipeline Verification, Static Analysis, and Frontend Quality Audits.  
 
 ---
 
@@ -10,11 +10,12 @@ The SENTRIX verification harness guarantees system safety, numerical correctness
 
 ```mermaid
 flowchart LR
-    subgraph Backend_Tests["Backend Test Suite (Pytest)"]
-        Unit["Unit Tests\n(Baselines, Entropy, Safety Gate, Model Loader)"]
-        Integration["Integration Tests\n(Pipeline Lifecycle, Chaos Simulator, Storage)"]
-        API["API Contract Tests\n(FastAPI TestClient, Headers, Auth)"]
-        Storage["Storage & Migrations\n(Alembic, Schemas, Repositories)"]
+    subgraph Backend_Tests["Backend Test Suite (Pytest - 173 Tests)"]
+        Unit["Unit Tests (70 Tests)\n(Baselines, Detection, Features, Simulator, Victim)"]
+        Integration["Integration Tests (24 Tests)\n(Defensive Mitigation, Reliability, Telemetry)"]
+        API["API Contract Tests (19 Tests)\n(FastAPI TestClient, Headers, Auth, Error Envelope)"]
+        TestCases["Formal Test Cases (42 Tests)\n(Phase 7 Hardening, TC01-TC16 Policy & Safety)"]
+        Storage["Storage & Core (18 Tests)\n(Alembic Migrations, Repositories, Runtime Config)"]
     end
 
     subgraph Static_Quality["Static Code Quality"]
@@ -30,63 +31,79 @@ flowchart LR
 
 ---
 
-## 2. Test Suite Directory Structure
+## 2. Test Suite Directory Structure (173 Tests Total)
 
-```
+```text
 backend/tests/
-├── api/                                # FastAPI route contract tests
-│   ├── test_alerts_api.py              # Alert querying and pagination
-│   ├── test_auth.py                    # Token verification & unauthorized checks
-│   ├── test_health.py                  # Health check & DB connectivity
-│   ├── test_mitigations_api.py         # Staged rules, approval, cancellation
-│   ├── test_simulations_api.py         # Cyber Range attack simulation
-│   ├── test_telemetry_api.py           # Ingress API & sliding-window stats
-│   └── test_thresholds_api.py          # Dynamic policy threshold updating
-├── integration/                        # Multi-component workflow tests
-│   ├── test_end_to_end_pipeline.py     # Ingress -> ML -> Policy -> Safety -> Rule
-│   ├── test_flow_processing.py         # Packet window aggregation
-│   └── test_simulation_shield_ml_audit.py # Simulator shield & audit ledger
-├── storage/                            # Database and migration validation
-│   ├── test_migrations.py              # Alembic upgrade/downgrade consistency
-│   └── test_repositories.py            # CRUD operations & transactional integrity
-└── unit/                               # Algorithm & isolated logic tests
-    ├── test_baselines.py               # EWMA running mean & moving variance
-    ├── test_defensive_engine.py        # Leaky bucket & dry-run state machine
-    ├── test_entropy.py                 # Shannon entropy H(X) & ratio η
-    ├── test_log_parser.py              # Combined/CLF/JSON log parsing & IP masking
-    ├── test_mitigation_cancellation.py # Rule cancellation & status updates
-    ├── test_model_loader.py            # Artifact resolution & feature schema check
-    ├── test_predictor.py               # ML inference probability & class output
-    ├── test_safety_gate.py             # Whitelist protection & prefix validation
-    └── test_threat_classifier.py       # Flash crowd vs attack differentiation
+├── conftest.py                             # Pytest fixtures, test database setup & mock generators
+├── api/                                    # FastAPI route contract and error handling tests (19 tests)
+│   ├── test_api_contracts.py              # Full REST API contracts and schema verification
+│   ├── test_error_handling.py             # Error envelope sanitization and status code assertions
+│   ├── test_health.py                     # Unauthenticated and authenticated health probes
+│   └── test_keepalive.py                  # Database ping and fallback authentication tests
+├── core/                                   # Configuration and runtime validator tests (9 tests)
+│   └── test_config.py                     # Environment variables, database URL validation, security flags
+├── integration/                            # Multi-component pipeline integration tests (24 tests)
+│   ├── test_defensive_mitigation.py       # Staged dry-run, approval, Nginx/Caddy config exports
+│   ├── test_reliability_and_performance.py# Fail-closed handling, recovery, benchmark latency checks
+│   ├── test_simulation_shield_ml_audit.py # Multi-tick simulator, defense shield, audit logging
+│   ├── test_tc08_simulation_safety.py     # Pure mathematical simulation without host network mutation
+│   ├── test_telemetry_detection.py        # Ingress to sliding window, EWMA, and ML threat evaluation
+│   └── test_telemetry_pipeline.py         # Log format parsing (Combined, CLF, JSON) and IP masking
+├── storage/                                # Database and migration validation tests (9 tests)
+│   ├── test_migrations.py                 # Idempotent Alembic upgrade and downgrade validation
+│   └── test_repositories.py               # Repository layer CRUD operations and session lifecycle
+├── test_cases/                             # Formal specification test suites (42 tests)
+│   ├── test_phase7_security_and_hardening.py # Security invariants, token safety, parameter bounds
+│   ├── test_tc01_to_tc07_policy_and_traffic.py # Velocity thresholds, baseline updates, policy consensus
+│   ├── test_tc09_tc10_tc12_virtual_lifecycle.py# Virtual rule lifecycle, cooldowns, emergency disable
+│   └── test_tc11_to_tc16_lifecycle_and_simulation.py # End-to-end chaos runs, seed determinism, scorecards
+└── unit/                                   # Isolated unit tests for algorithms and models (70 tests)
+    ├── test_baselines.py                  # Adaptive EWMA moving mean, moving variance, Z-scores
+    ├── test_detection.py                  # Model loader, predictor, schema compatibility checks
+    ├── test_features.py                   # 14 canonical features extraction, scaling, circular deque
+    ├── test_mitigation_cancellation.py    # Mitigation cancellation idempotency and state changes
+    ├── test_mitigation_lifecycle.py       # Mitigation state machine transition validation
+    ├── test_mitigation_network_status.py  # Host IP resolution, gateway discovery, system status
+    ├── test_policy_and_safety.py          # Allowlist protection gate, RFC 1918 safety invariants
+    ├── test_simulator_api.py              # Simulator run creation, control, export API handlers
+    ├── test_simulator_manager.py          # Virtual clock worker, speed controls, retention pruning
+    ├── test_simulator_scenarios.py        # Scenario types (SYN, UDP, HTTP, Slowloris, Flash Crowd)
+    ├── test_simulator_scorecard.py        # Scorecard calculation (TTD, TTM, drop efficiency)
+    ├── test_simulator_victim.py           # Virtual victim M/M/1 queuing model, bandwidth, CPU saturation
+    └── test_threat_classifier.py          # Multi-tier classifier, entropy ratio, flash crowd differentiator
 ```
 
 ---
 
 ## 3. Running Backend Tests with Pytest
 
-All backend tests execute against isolated in-memory or temporary SQLite test databases.
+All backend tests execute against isolated in-memory or temporary SQLite test databases (`sentrix_test.db`).
 
-### Run All Backend Tests:
+### Run All 173 Backend Tests:
 ```powershell
 # Windows PowerShell
-.\.venv\Scripts\pytest backend/tests -v
+.\.venv\Scripts\Activate.ps1
+python -m pytest backend/tests -v
 ```
 *(Linux/macOS: `pytest backend/tests -v`)*
 
 ### Run Specific Sub-Suites:
 ```bash
-# Unit tests only:
-pytest backend/tests/unit -v
+# Unit tests only (70 tests):
+python -m pytest backend/tests/unit -v
 
-# Integration tests only:
-pytest backend/tests/integration -v
+# Integration tests only (24 tests):
+python -m pytest backend/tests/integration -v
 
-# API route tests only:
-pytest backend/tests/api -v
+# API route tests only (19 tests):
+python -m pytest backend/tests/api -v
 
-# Storage & migration tests only:
-pytest backend/tests/storage -v
+# Formal test cases only (42 tests):
+python -m pytest backend/tests/test_cases -v
+
+# Storage & migration tests only (9 tests):
+python -m pytest backend/tests/storage -v
 ```
 
 ---
@@ -119,22 +136,18 @@ python -m ruff check --fix backend
 
 ### Run Strict TypeScript Typecheck:
 ```bash
-cd frontend
-node node_modules/typescript/bin/tsc --project tsconfig.json --noEmit
+npm run typecheck --prefix frontend
 ```
 *Expected output: 0 errors.*
 
 ### Run ESLint:
 ```bash
-cd frontend
-npm run lint
+npm run lint --prefix frontend
 ```
 *Expected output: No lint warnings or errors.*
 
 ### Production Build Test:
 ```bash
-cd frontend
-npm run build
+npm run build --prefix frontend
 ```
-*Generates optimized standalone Next.js production build.*
-
+*Generates optimized standalone Next.js production build compiling all 13 routes.*
