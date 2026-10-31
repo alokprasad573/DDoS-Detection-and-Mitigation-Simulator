@@ -26,20 +26,20 @@ export function ExplainCard({
     <div
       className={`rounded-xl border border-gray-700/60 bg-[#111827]/70 p-4 transition-all ${className}`}
     >
-      <div className="flex items-start justify-between gap-3">
+      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
         <div className="flex items-start gap-3">
-          <div className="mt-0.5 rounded-lg bg-[#06B6D4]/15 p-1.5 text-[#06B6D4]">
+          <div className="mt-0.5 rounded-lg bg-[#06B6D4]/15 p-1.5 text-[#06B6D4] shrink-0">
             <HelpCircle className="h-4 w-4" />
           </div>
-          <div>
+          <div className="min-w-0">
             <h4 className="text-xs font-semibold text-gray-200">{title}</h4>
-            <p className="mt-1 text-xs text-gray-300 leading-relaxed">{summary}</p>
+            <p className="mt-1 text-xs text-gray-300 leading-relaxed wrap-break-word">{summary}</p>
             {tips && tips.length > 0 && (
               <ul className="mt-2 space-y-1 text-xs text-gray-400">
                 {tips.map((tip, idx) => (
-                  <li key={idx} className="flex items-center gap-1.5">
-                    <span className="h-1 w-1 rounded-full bg-[#00FF9D]" />
-                    <span>{tip}</span>
+                  <li key={idx} className="flex items-start gap-1.5">
+                    <span className="h-1 w-1 rounded-full bg-[#00FF9D] mt-1.5 shrink-0" />
+                    <span className="wrap-break-word">{tip}</span>
                   </li>
                 ))}
               </ul>
@@ -51,7 +51,7 @@ export function ExplainCard({
           <button
             type="button"
             onClick={() => setIsOpen(!isOpen)}
-            className="flex shrink-0 items-center gap-1 rounded-lg border border-gray-700/60 bg-[#1F2937]/60 px-2.5 py-1 text-[11px] font-mono text-gray-300 hover:border-[#00FF9D]/40 hover:text-[#00FF9D] transition-colors"
+            className="flex shrink-0 self-start sm:self-auto items-center gap-1 rounded-lg border border-gray-700/60 bg-[#1F2937]/60 px-2.5 py-1 text-[11px] font-mono text-gray-300 hover:border-[#00FF9D]/40 hover:text-[#00FF9D] transition-colors"
             aria-expanded={isOpen}
           >
             <Terminal className="h-3.5 w-3.5" />

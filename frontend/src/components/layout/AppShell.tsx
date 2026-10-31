@@ -89,12 +89,12 @@ export function AppShell({ children }: AppShellProps) {
     >
       {/* Top Header */}
       <header className="app-header" role="banner">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
           <button
             type="button"
             suppressHydrationWarning
             onClick={() => setMobileOpen(!mobileOpen)}
-            className="lg:hidden p-2 rounded-lg bg-[#1F2937]/70 border border-gray-700/60 text-gray-400 hover:text-[#00FF9D] hover:border-[#00FF9D]/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00FF9D] transition-colors"
+            className="lg:hidden p-2 min-w-10 min-h-10 flex items-center justify-center shrink-0 rounded-lg bg-[#1F2937]/70 border border-gray-700/60 text-gray-400 hover:text-[#00FF9D] hover:border-[#00FF9D]/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#00FF9D] transition-colors"
             aria-label="Toggle Navigation Menu"
             aria-expanded={mobileOpen}
             aria-controls="mobile-navigation-drawer"
@@ -102,37 +102,38 @@ export function AppShell({ children }: AppShellProps) {
             <Menu className="w-5 h-5" />
           </button>
 
-          <Link className="brand group" href="/overview">
+          <Link className="brand group shrink-0 min-w-0" href="/overview">
             <span
-              className="brand-mark group-hover:shadow-[0_0_20px_rgba(0,255,157,0.45)] transition-shadow"
+              className="brand-mark shrink-0 group-hover:shadow-[0_0_20px_rgba(0,255,157,0.45)] transition-shadow"
               aria-hidden="true"
             >
               S
             </span>
-            <div className="flex flex-col">
-              <span className="text-gray-100 font-bold tracking-widest text-lg font-mono flex items-center gap-2">
+            <div className="flex flex-col min-w-0">
+              <span className="text-gray-100 font-bold tracking-widest text-base sm:text-lg font-mono flex items-center gap-2">
                 SENTRIX
               </span>
-              <span className="text-[11px] text-gray-400 font-sans leading-none">
+              <span className="text-[11px] text-gray-400 font-sans leading-none hidden sm:inline truncate max-w-55 md:max-w-none">
                 DDoS Detection and Mitigation Simulator
               </span>
             </div>
           </Link>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3 shrink-0">
           {/* Synchronized Defense Shield Global Pill */}
           <Link
             href="/protection"
-            className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-mono transition-all border ${
+            className={`inline-flex items-center gap-1.5 sm:gap-2 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full text-[11px] sm:text-xs font-mono transition-all border shrink-0 ${
               isShieldActive
                 ? "bg-[rgba(0,255,157,0.15)] border-[#00FF9D]/60 text-[#00FF9D] shadow-[0_0_14px_rgba(0,255,157,0.35)]"
                 : "bg-[#1F2937]/70 border-gray-700/60 text-gray-300 hover:text-white hover:border-gray-600"
             }`}
           >
-            <Shield className={`w-3.5 h-3.5 ${isShieldActive ? "text-[#00FF9D] animate-pulse" : "text-[#06B6D4]"}`} />
-            <span className="font-bold">
-              {isShieldActive ? `SHIELD: ACTIVE (${remainingSec}s)` : "SHIELD: STANDBY"}
+            <Shield className={`w-3.5 h-3.5 shrink-0 ${isShieldActive ? "text-[#00FF9D] animate-pulse" : "text-[#06B6D4]"}`} />
+            <span className="font-bold tracking-tight">
+              <span className="hidden xs:inline">SHIELD: </span>
+              {isShieldActive ? `ACTIVE (${remainingSec}s)` : "STANDBY"}
             </span>
           </Link>
 
@@ -235,8 +236,8 @@ export function AppShell({ children }: AppShellProps) {
             onClick={() => setMobileOpen(false)}
             aria-hidden="true"
           />
-          <div className="relative w-72 max-w-[85vw] bg-[#090D16] border-r border-gray-700/60 p-4 flex flex-col z-10 shadow-2xl">
-            <div className="flex items-center justify-between pb-4 border-b border-gray-800 mb-4">
+          <div className="relative w-72 max-w-[85vw] bg-[#090D16] border-r border-gray-700/60 p-4 flex flex-col z-10 shadow-2xl h-full max-h-screen">
+            <div className="flex items-center justify-between pb-4 border-b border-gray-800 mb-4 shrink-0">
               <span className="font-mono text-sm font-bold text-gray-100 flex items-center gap-2">
                 <span className="brand-mark w-7 h-7 text-xs" aria-hidden="true">S</span>
                 SENTRIX
@@ -251,7 +252,7 @@ export function AppShell({ children }: AppShellProps) {
               </button>
             </div>
 
-            <nav aria-label="Mobile Navigation Links" className="space-y-1 overflow-y-auto">
+            <nav aria-label="Mobile Navigation Links" className="space-y-1 overflow-y-auto flex-1 overscroll-contain pr-1">
               {NAV_ROUTES.map((route) => {
                 const active = isRouteActive(route.href);
                 const Icon = route.icon;
@@ -261,7 +262,7 @@ export function AppShell({ children }: AppShellProps) {
                     href={route.href}
                     aria-current={active ? "page" : undefined}
                     onClick={() => setMobileOpen(false)}
-                    className={`flex items-center justify-between gap-3 px-3 py-2.5 rounded-xl transition-all ${
+                    className={`flex items-center justify-between gap-3 px-3 py-2.5 rounded-xl transition-all min-h-11 ${
                       active
                         ? "bg-[#00FF9D]/15 border border-[#00FF9D]/40 text-[#00FF9D]"
                         : "text-gray-400 hover:bg-[#1F2937]/60 hover:text-white"
@@ -283,6 +284,13 @@ export function AppShell({ children }: AppShellProps) {
                 );
               })}
             </nav>
+
+            <div className="mt-auto pt-4 border-t border-gray-800 shrink-0">
+              <span className="mode-badge w-full justify-center">
+                <span className="inline-block w-2 h-2 rounded-full bg-[#00FF9D] animate-pulse shadow-[0_0_8px_#00FF9D]" />
+                DEFENSE ENGINE ARMED
+              </span>
+            </div>
           </div>
         </div>
       )}

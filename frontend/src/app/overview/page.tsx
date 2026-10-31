@@ -322,20 +322,20 @@ export default function OverviewPage() {
   const totalDdosAlerts = alertsData?.total_count ?? alertsData?.total ?? alertsData?.alerts?.length ?? 0;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 min-w-0">
       {/* Top Header */}
-      <div className="flex flex-wrap items-center justify-between gap-4 pb-2 border-b border-gray-800">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight text-gray-100 flex items-center gap-3">
-            <Activity className="w-7 h-7 text-[#00FF9D]" />
-            Overview Dashboard
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-gray-800">
+        <div className="min-w-0">
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-gray-100 flex items-center gap-3">
+            <Activity className="w-6 h-6 sm:w-7 sm:h-7 text-[#00FF9D] shrink-0" />
+            <span className="truncate">Overview Dashboard</span>
           </h1>
           <p className="text-xs text-gray-400 mt-1">
             Real-time summary of network traffic, security threat alerts, and automated DDoS mitigation.
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-4">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-4 shrink-0">
           <StatusIndicator status={statusType} />
           {lastCheckMessage && (
             <span className="text-[11px] font-mono text-[#00FF9D] bg-[rgba(0,255,157,0.12)] border border-[#00FF9D]/40 px-2.5 py-1 rounded-md animate-pulse">
@@ -348,6 +348,7 @@ export default function OverviewPage() {
             onClick={handleRefreshAll}
             disabled={isRefreshing}
             title="Synchronize all backend data"
+            className="w-full xs:w-auto"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? "animate-spin text-[#00FF9D]" : ""}`} />
             {isRefreshing ? "Syncing..." : "Sync Backend"}
@@ -385,7 +386,7 @@ export default function OverviewPage() {
 
       {/* Prominent Protection & Detection Status Banner */}
       <div
-        className={`p-6 rounded-2xl border-2 transition-all shadow-2xl ${
+        className={`p-4 sm:p-6 rounded-2xl border-2 transition-all shadow-2xl ${
           isShieldActive
             ? "bg-linear-to-r from-[rgba(0,255,157,0.2)] via-[#1F2937]/90 to-[#090D16]/95 border-[#00FF9D] shadow-[0_0_35px_rgba(0,255,157,0.3)]"
             : isAttackActive
@@ -394,7 +395,7 @@ export default function OverviewPage() {
         }`}
       >
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div className="space-y-2">
+          <div className="space-y-2 min-w-0">
             <div className="flex items-center gap-2">
               <span className="text-xs font-mono uppercase tracking-widest text-gray-400">
                 System Protection Status:
@@ -412,7 +413,7 @@ export default function OverviewPage() {
 
             <div className="flex items-center gap-4">
               <div
-                className={`text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight font-sans ${
+                className={`text-xl sm:text-2xl lg:text-3xl font-extrabold tracking-tight font-sans wrap-break-word ${
                   isShieldActive
                     ? "text-[#00FF9D]"
                     : isAttackActive
@@ -456,14 +457,14 @@ export default function OverviewPage() {
             )}
           </div>
 
-          <div className="flex flex-col sm:flex-row md:flex-col items-start md:items-end gap-3 shrink-0">
-            <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-col sm:flex-row md:flex-col items-stretch sm:items-start md:items-end gap-3 shrink-0 w-full md:w-auto">
+            <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
               {isShieldActive ? (
                 <Button
                   variant="outline"
                   size="md"
                   onClick={handleCancelShield}
-                  className="border-rose-500/60 text-rose-300 hover:bg-rose-500/20 font-sans"
+                  className="border-rose-500/60 text-rose-300 hover:bg-rose-500/20 font-sans flex-1 sm:flex-initial"
                 >
                   Deactivate Protection ✕
                 </Button>
@@ -473,7 +474,7 @@ export default function OverviewPage() {
                   size="md"
                   onClick={handleQuickActivateShield}
                   loading={isActivatingShield}
-                  className="font-sans bg-[#00FF9D] hover:bg-[#00FF9D]/80 text-[#090D16] font-bold shadow-lg"
+                  className="font-sans bg-[#00FF9D] hover:bg-[#00FF9D]/80 text-[#090D16] font-bold shadow-lg flex-1 sm:flex-initial"
                 >
                   <Shield className="w-4 h-4 mr-1.5" />
                   Activate Protection →
@@ -485,7 +486,7 @@ export default function OverviewPage() {
                   variant="danger"
                   size="md"
                   onClick={handleStopAttack}
-                  className="font-sans bg-rose-600 hover:bg-rose-500 text-white shadow-md text-xs"
+                  className="font-sans bg-rose-600 hover:bg-rose-500 text-white shadow-md text-xs flex-1 sm:flex-initial"
                 >
                   Stop Attack ⏹
                 </Button>
@@ -493,13 +494,13 @@ export default function OverviewPage() {
             </div>
 
             {isSimRunning && (
-              <div className="text-[11px] font-mono text-amber-300">
+              <div className="text-[11px] font-mono text-amber-300 text-left md:text-right">
                 Simulation Active: Tick {activeRun?.current_tick}/{activeRun?.total_ticks}
               </div>
             )}
 
-            <Link href="/simulator">
-              <Button variant="primary" size="md">
+            <Link href="/simulator" className="w-full sm:w-auto">
+              <Button variant="primary" size="md" className="w-full sm:w-auto justify-center">
                 Launch Traffic Simulator →
               </Button>
             </Link>

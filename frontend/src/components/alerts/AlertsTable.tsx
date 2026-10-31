@@ -41,8 +41,8 @@ export function AlertsTable({ alerts, onSelectAlert }: AlertsTableProps) {
 
   return (
     <div className="space-y-3">
-      <div className="overflow-x-auto rounded-xl border border-gray-700/60 bg-[#090D16]/80 font-mono text-xs">
-      <table className="w-full text-left border-collapse" aria-label="Security Threat Incidents">
+      <div className="overflow-x-auto rounded-xl border border-gray-700/60 bg-[#090D16]/80 font-mono text-xs -webkit-overflow-scrolling-touch">
+      <table className="w-full min-w-170 text-left border-collapse" aria-label="Security Threat Incidents">
         <thead>
           <tr className="border-b border-gray-800 bg-[#1F2937]/50 text-gray-400 text-[11px] uppercase tracking-wider">
             <th scope="col" className="py-3 px-3">Timestamp (IST)</th>

@@ -13,7 +13,6 @@ import {
 } from "@/components/ui/Card";
 import {
   CheckCircle2,
-  Lock,
   RefreshCw,
   Server,
   Sliders,
@@ -22,8 +21,6 @@ import {
 import { StatusIndicator } from "@/components/ui/StatusIndicator";
 import {
   api,
-  getApiAuthToken,
-  setApiAuthToken,
   type ModelMetricsResponse,
   type ModelsResponse,
   type ThresholdConfigResponse,
@@ -50,8 +47,6 @@ function ThresholdForm({ initialData, loading, onRefresh }: ThresholdFormProps) 
   // Simulation test sliders for interactive matrix preview
   const [testPps, setTestPps] = useState<number>(4500);
   const [testRfScore, setTestRfScore] = useState<number>(0.65);
-
-
 
   const handleSaveThresholds = async () => {
     setSaving(true);
@@ -204,7 +199,7 @@ function ThresholdForm({ initialData, loading, onRefresh }: ThresholdFormProps) 
           </div>
 
           <div className="flex justify-end pt-2">
-            <Button variant="primary" size="sm" loading={saving} onClick={handleSaveThresholds} className="font-sans text-xs">
+            <Button variant="primary" size="sm" loading={saving} onClick={handleSaveThresholds} className="font-sans text-xs w-full sm:w-auto">
               Save Safety Limits
             </Button>
           </div>
@@ -288,9 +283,6 @@ function ThresholdForm({ initialData, loading, onRefresh }: ThresholdFormProps) 
 }
 
 export default function SettingsPage() {
-  const [authToken, setAuthTokenState] = useState<string>(() => getApiAuthToken());
-  const [tokenSavedMsg, setTokenSavedMsg] = useState<string | null>(null);
-
   const fetchThresholds = useCallback(() => api.getThresholds(), []);
   const {
     data: thresholdData,
@@ -344,16 +336,10 @@ export default function SettingsPage() {
     };
   }, []);
 
-  const handleUpdateToken = () => {
-    setApiAuthToken(authToken.trim());
-    setTokenSavedMsg("Token updated for active session.");
-    setTimeout(() => setTokenSavedMsg(null), 3000);
-  };
-
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-wrap items-center justify-between gap-4 pb-2 border-b border-gray-800">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-gray-800">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-gray-100 flex items-center gap-3">
             <Sliders className="w-6 h-6 text-[#00FF9D]" />
@@ -364,7 +350,7 @@ export default function SettingsPage() {
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3 w-full sm:w-auto">
           <StatusIndicator
             status={
               isDisconnected
@@ -376,7 +362,7 @@ export default function SettingsPage() {
                 : "online"
             }
           />
-          <Button variant="outline" size="sm" onClick={() => refresh()} className="text-xs font-sans">
+          <Button variant="outline" size="sm" onClick={() => refresh()} className="text-xs font-sans w-full xs:w-auto">
             <RefreshCw className="w-3.5 h-3.5 mr-1" />
             Reload Server Values
           </Button>
@@ -411,7 +397,7 @@ export default function SettingsPage() {
           />
         </div>
 
-        {/* Right Column: Model Information & API Token */}
+        {/* Right Column: Model Information */}
         <div className="space-y-6">
           <Card>
             <CardHeader>
@@ -454,42 +440,6 @@ export default function SettingsPage() {
                   {primaryModel?.status || (modelLoading ? "Checking..." : "Unverified")}
                 </Badge>
               </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <div>
-                <CardTitle className="flex items-center gap-2">
-                  <Lock className="w-4 h-4 text-[#00FF9D]" />
-                  API Authentication
-                </CardTitle>
-                <CardDescription>Session token used to authenticate with backend endpoints</CardDescription>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-3 text-xs">
-              {tokenSavedMsg && (
-                <div className="p-2.5 rounded-lg bg-[rgba(0,255,157,0.12)] border border-[#00FF9D]/40 text-[#00FF9D] flex items-center gap-2">
-                  <CheckCircle2 className="w-4 h-4 text-[#00FF9D] shrink-0" />
-                  <span>{tokenSavedMsg}</span>
-                </div>
-              )}
-              <div>
-                <label htmlFor="auth-token-input" className="block text-gray-400 mb-1">
-                  API Bearer Token:
-                </label>
-                <input
-                  id="auth-token-input"
-                  type="password"
-                  value={authToken}
-                  onChange={(e) => setAuthTokenState(e.target.value)}
-                  placeholder="Paste SENTRIX API Token"
-                  className="w-full bg-[#090D16] border border-gray-700/60 rounded-lg px-3 py-2 text-xs text-gray-200 font-mono focus:border-[#00FF9D] focus:outline-none"
-                />
-              </div>
-              <Button variant="outline" size="sm" onClick={handleUpdateToken} className="w-full font-sans text-xs">
-                Apply Token
-              </Button>
             </CardContent>
           </Card>
         </div>

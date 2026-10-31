@@ -171,7 +171,7 @@ export default function MachineLearningPage() {
       {/* Top Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-2 border-b border-gray-800">
         <div>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-2 sm:gap-3">
             <h1 className="text-2xl font-bold text-gray-100 flex items-center gap-2">
               <Cpu className="w-6 h-6 text-[#00FF9D]" />
               Machine Learning
@@ -190,7 +190,7 @@ export default function MachineLearningPage() {
           size="sm"
           onClick={loadModelInfo}
           disabled={loading}
-          className="text-xs font-sans self-start md:self-auto"
+          className="text-xs font-sans w-full sm:w-auto self-start md:self-auto"
         >
           <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin text-[#00FF9D]" : ""}`} />
           {loading ? "Verifying..." : "Verify Model Status"}
@@ -299,11 +299,11 @@ export default function MachineLearningPage() {
                       : "bg-[#111827]/70 border-gray-700/60 text-gray-400 hover:text-gray-200 hover:border-gray-600"
                   }`}
                 >
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-gray-200">{vector.name}</span>
+                  <div className="flex items-start justify-between gap-2">
+                    <span className="text-xs font-bold text-gray-200 wrap-break-word min-w-0">{vector.name}</span>
                     <Badge
                       variant={vector.expected === "BENIGN" ? "normal" : "critical"}
-                      className="text-[10px]"
+                      className="text-[10px] shrink-0"
                     >
                       {vector.expected}
                     </Badge>
@@ -317,18 +317,18 @@ export default function MachineLearningPage() {
           </div>
 
           {/* Test Action Button */}
-          <div className="flex items-center gap-4 pt-2 border-t border-gray-800">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 pt-2 border-t border-gray-800">
             <Button
               variant="primary"
               size="md"
               onClick={handleRunPrediction}
               disabled={isPredicting}
-              className="text-xs font-sans"
+              className="text-xs font-sans w-full sm:w-auto"
             >
               <Play className="w-4 h-4 mr-1.5" />
               {isPredicting ? "Running Live Prediction..." : "Run ML Prediction →"}
             </Button>
-            <span className="text-xs text-gray-400">
+            <span className="text-xs text-gray-400 wrap-break-word">
               Sends 14 NetFlow features to backend endpoint <code className="text-gray-300">/api/v1/detection/analyze</code>
             </span>
           </div>
@@ -336,7 +336,7 @@ export default function MachineLearningPage() {
           {/* Prediction Results Banner */}
           {predictionResult && (
             <div
-              className={`p-5 rounded-xl border-2 transition-all ${
+              className={`p-4 sm:p-5 rounded-xl border-2 transition-all ${
                 predictionResult.prediction.toLowerCase() === "attack"
                   ? "bg-red-500/15 border-red-500 shadow-[0_0_20px_rgba(239,68,68,0.2)]"
                   : "bg-[#00FF9D]/10 border-[#00FF9D] shadow-[0_0_20px_rgba(0,255,157,0.2)]"
@@ -355,7 +355,7 @@ export default function MachineLearningPage() {
                       {predictionResult.prediction}
                     </Badge>
                   </div>
-                  <h3 className="text-xl font-bold text-gray-100">
+                  <h3 className="text-lg sm:text-xl font-bold text-gray-100">
                     {predictionResult.prediction.toLowerCase() === "attack"
                       ? "Identified as Attack Traffic"
                       : "Identified as Normal Genuine Traffic"}
@@ -365,20 +365,20 @@ export default function MachineLearningPage() {
                   </p>
                 </div>
 
-                <div className="flex items-center gap-4 text-right shrink-0">
-                  <div className="px-3 py-2 bg-black/40 rounded-lg border border-gray-700/60">
+                <div className="grid grid-cols-2 gap-2 sm:flex sm:items-center sm:gap-4 text-left sm:text-right shrink-0">
+                  <div className="px-2.5 py-1.5 sm:px-3 sm:py-2 bg-black/40 rounded-lg border border-gray-700/60">
                     <span className="text-[10px] text-gray-400 block uppercase font-mono">
                       {predictionResult.score_type || "Risk Score"}
                     </span>
-                    <span className="text-base font-bold font-mono text-[#00FF9D]">
+                    <span className="text-sm sm:text-base font-bold font-mono text-[#00FF9D]">
                       {(predictionResult.score * 100).toFixed(1)}%
                     </span>
                   </div>
-                  <div className="px-3 py-2 bg-black/40 rounded-lg border border-gray-700/60">
+                  <div className="px-2.5 py-1.5 sm:px-3 sm:py-2 bg-black/40 rounded-lg border border-gray-700/60">
                     <span className="text-[10px] text-gray-400 block uppercase font-mono">
                       Inference Time
                     </span>
-                    <span className="text-base font-bold font-mono text-[#06B6D4]">
+                    <span className="text-sm sm:text-base font-bold font-mono text-[#06B6D4]">
                       {predictionTimeMs !== null ? `${predictionTimeMs} ms` : "—"}
                     </span>
                   </div>

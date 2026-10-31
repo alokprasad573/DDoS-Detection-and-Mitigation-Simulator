@@ -110,9 +110,9 @@ export default function HealthPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-wrap items-center justify-between gap-4 pb-2 border-b border-gray-800">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-gray-800">
         <div>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-2 sm:gap-3">
             <h1 className="text-2xl font-bold tracking-tight text-gray-100 flex items-center gap-2">
               <HeartPulse className="w-6 h-6 text-[#00FF9D]" />
               System Health & Audit
@@ -126,7 +126,7 @@ export default function HealthPage() {
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3 w-full sm:w-auto">
           <StatusIndicator status={statusType} />
           {lastUpdated && (
             <span className="text-xs text-gray-400 font-mono">
@@ -138,7 +138,7 @@ export default function HealthPage() {
             size="sm"
             onClick={handleRefreshAll}
             disabled={isRefreshing}
-            className="text-xs font-sans"
+            className="text-xs font-sans w-full xs:w-auto"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? "animate-spin text-[#00FF9D]" : ""}`} />
             {isRefreshing ? "Checking..." : "Check Status"}
@@ -148,7 +148,7 @@ export default function HealthPage() {
             variant="outline"
             size="sm"
             onClick={handleDownloadCsv}
-            className="text-xs font-sans"
+            className="text-xs font-sans w-full xs:w-auto"
           >
             <Download className="w-3.5 h-3.5 mr-1 text-[#06B6D4]" />
             Export Audit Log (CSV)
@@ -233,12 +233,12 @@ export default function HealthPage() {
             </CardDescription>
           </div>
 
-          <div className="flex items-center gap-2">
-            <label className="text-xs text-gray-400">Filter Event Type:</label>
+          <div className="flex flex-col xs:flex-row xs:items-center gap-2 w-full sm:w-auto shrink-0">
+            <label className="text-xs text-gray-400 shrink-0">Filter Event Type:</label>
             <select
               value={eventTypeFilter}
               onChange={(e) => setEventTypeFilter(e.target.value)}
-              className="px-3 py-1.5 bg-[#1F2937]/70 border border-gray-700/60 rounded-lg text-xs text-gray-200 focus:outline-none focus:border-[#00FF9D]"
+              className="px-3 py-1.5 bg-[#1F2937]/70 border border-gray-700/60 rounded-lg text-xs text-gray-200 focus:outline-none focus:border-[#00FF9D] w-full xs:w-auto"
             >
               <option value="all">All Events</option>
               <option value="mitigation">Protection & Mitigations</option>
@@ -255,8 +255,8 @@ export default function HealthPage() {
             </p>
           ) : (
             <div className="space-y-4">
-              <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs">
+              <div className="overflow-x-auto -webkit-overflow-scrolling-touch">
+              <table className="w-full text-left text-xs min-w-155">
                 <thead className="border-b border-gray-800 text-gray-400 font-mono uppercase text-[10px]">
                   <tr>
                     <th className="py-2.5 px-3">Timestamp (IST)</th>

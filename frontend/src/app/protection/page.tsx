@@ -185,10 +185,10 @@ export default function ProtectionPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-wrap items-center justify-between gap-4 pb-2 border-b border-gray-800">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-gray-800">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-gray-100 flex items-center gap-3">
-            <Shield className="w-6 h-6 text-[#00FF9D]" />
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-gray-100 flex items-center gap-3">
+            <Shield className="w-6 h-6 text-[#00FF9D] shrink-0" />
             Attack Protection
           </h1>
           <p className="text-xs text-gray-400 mt-1">
@@ -196,10 +196,10 @@ export default function ProtectionPage() {
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3 w-full sm:w-auto">
           <StatusIndicator status={statusType} />
           {lastUpdated && (
-            <span className="text-xs text-gray-400 font-mono">
+            <span className="text-xs text-gray-400 font-mono hidden md:inline">
               Updated: {formatISTTime(lastUpdated)} IST
             </span>
           )}
@@ -208,7 +208,7 @@ export default function ProtectionPage() {
             size="sm"
             onClick={handleRefresh}
             disabled={isRefreshing}
-            className="text-xs font-sans"
+            className="text-xs font-sans flex-1 sm:flex-initial"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? "animate-spin text-[#00FF9D]" : ""}`} />
             {isRefreshing ? "Refreshing..." : "Refresh"}
@@ -220,7 +220,7 @@ export default function ProtectionPage() {
               size="sm"
               onClick={handleReenableSafetyGate}
               title="Clear lockout and restore defense engine"
-              className="bg-emerald-600 hover:bg-emerald-500 text-white font-sans text-xs"
+              className="bg-emerald-600 hover:bg-emerald-500 text-white font-sans text-xs flex-1 sm:flex-initial"
             >
               <Power className="w-4 h-4 mr-1" />
               Re-enable Defense Engine
@@ -231,7 +231,7 @@ export default function ProtectionPage() {
               size="sm"
               onClick={() => setIsDisableModalOpen(true)}
               title="Pause all defenses"
-              className="text-xs font-sans"
+              className="text-xs font-sans flex-1 sm:flex-initial"
             >
               <Power className="w-4 h-4 mr-1" />
               Emergency Pause All Defenses
@@ -400,12 +400,12 @@ export default function ProtectionPage() {
               All simulated, suggested, and applied rate limiting actions with auto-expiry countdowns.
             </CardDescription>
           </div>
-          <div className="flex items-center gap-2">
-            <label className="text-xs text-gray-400">Filter status:</label>
+          <div className="flex flex-col xs:flex-row xs:items-center gap-2 w-full sm:w-auto shrink-0">
+            <label className="text-xs text-gray-400 shrink-0">Filter status:</label>
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="px-3 py-1.5 bg-[#1F2937]/70 border border-gray-700/60 rounded-lg text-xs text-gray-200 focus:outline-none focus:border-[#00FF9D]"
+              className="px-3 py-1.5 bg-[#1F2937]/70 border border-gray-700/60 rounded-lg text-xs text-gray-200 focus:outline-none focus:border-[#00FF9D] w-full xs:w-auto"
             >
               <option value="all">All States</option>
               <option value="active">Active Only</option>
@@ -421,8 +421,8 @@ export default function ProtectionPage() {
               No protection actions recorded in this view.
             </p>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs">
+            <div className="overflow-x-auto -webkit-overflow-scrolling-touch">
+              <table className="w-full min-w-140 text-left text-xs">
                 <thead className="border-b border-gray-800 text-gray-400 font-mono uppercase text-[10px]">
                   <tr>
                     <th className="py-2.5 px-3">Target Address</th>

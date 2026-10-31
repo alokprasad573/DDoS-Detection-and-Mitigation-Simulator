@@ -235,11 +235,11 @@ export default function DetectionPage() {
       >
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
           <div className="space-y-2">
-            <div className="flex items-center gap-3">
+            <div className="flex flex-wrap items-center gap-2 sm:gap-3">
               <span className="text-xs uppercase tracking-wider text-gray-400">
                 Current Live Assessment:
               </span>
-              <Badge variant={threatBadgeVariant} className="text-sm px-3 py-1 font-bold">
+              <Badge variant={threatBadgeVariant} className="text-xs sm:text-sm px-2.5 sm:px-3 py-1 font-bold">
                 {isFlashCrowd
                   ? "Sudden Popular Traffic Surge (Harmless)"
                   : isThreat
@@ -276,7 +276,7 @@ export default function DetectionPage() {
               variant="primary"
               onClick={handleProposeDefense}
               disabled={proposingRule}
-              className="text-xs font-sans whitespace-nowrap"
+              className="text-xs font-sans w-full lg:w-auto"
             >
               <Shield className="w-4 h-4 mr-1.5" />
               Suggest Safe Defense Rule
@@ -326,15 +326,15 @@ export default function DetectionPage() {
             </CardDescription>
           </div>
 
-          <div className="flex flex-wrap items-center gap-3">
-            <div className="relative">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
+            <div className="relative flex-1 sm:w-56">
               <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
               <input
                 type="text"
                 value={searchIp}
                 onChange={(e) => setSearchIp(e.target.value)}
                 placeholder="Filter by IP address..."
-                className="pl-9 pr-3 py-1.5 bg-[#1F2937]/70 border border-gray-700/60 rounded-lg text-xs text-gray-200 placeholder-gray-500 focus:outline-none focus:border-[#00FF9D]"
+                className="w-full pl-9 pr-3 py-1.5 bg-[#1F2937]/70 border border-gray-700/60 rounded-lg text-xs text-gray-200 placeholder-gray-500 focus:outline-none focus:border-[#00FF9D]"
               />
             </div>
 
@@ -342,7 +342,7 @@ export default function DetectionPage() {
               aria-label="Filter alerts by severity"
               value={severityFilter}
               onChange={(e) => setSeverityFilter(e.target.value)}
-              className="px-3 py-1.5 bg-[#1F2937]/70 border border-gray-700/60 rounded-lg text-xs text-gray-200 focus:outline-none focus:border-[#00FF9D]"
+              className="w-full sm:w-auto px-3 py-1.5 bg-[#1F2937]/70 border border-gray-700/60 rounded-lg text-xs text-gray-200 focus:outline-none focus:border-[#00FF9D]"
             >
               <option value="all">All Severities</option>
               <option value="critical">Critical</option>

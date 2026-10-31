@@ -7,7 +7,7 @@ export function Card({
 }: HTMLAttributes<HTMLDivElement> & { children: ReactNode }) {
   return (
     <div
-      className={`rounded-xl border border-gray-700/50 bg-[#111827]/70 backdrop-blur-xl p-5 shadow-xl shadow-black/40 transition-all hover:border-[#00FF9D]/40 ${className}`}
+      className={`rounded-xl border border-gray-700/50 bg-[#111827]/70 backdrop-blur-xl p-4 sm:p-5 shadow-xl shadow-black/40 transition-all hover:border-[#00FF9D]/40 ${className}`}
       {...props}
     >
       {children}
@@ -22,7 +22,7 @@ export function CardHeader({
 }: HTMLAttributes<HTMLDivElement> & { children: ReactNode }) {
   return (
     <div
-      className={`flex items-center justify-between gap-4 pb-4 border-b border-gray-800 mb-4 ${className}`}
+      className={`flex items-start sm:items-center justify-between gap-3 sm:gap-4 pb-3 sm:pb-4 border-b border-gray-800 mb-4 ${className}`}
       {...props}
     >
       {children}

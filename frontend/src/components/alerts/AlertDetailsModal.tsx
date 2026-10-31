@@ -202,8 +202,8 @@ export function AlertDetailsModal({ alert, onClose }: AlertDetailsModalProps) {
           </div>
         )}
 
-        <div className="flex justify-end gap-3 pt-3 border-t border-gray-800">
-          <Button variant="outline" size="sm" onClick={onClose}>
+        <div className="flex flex-col-reverse sm:flex-row justify-end gap-2 sm:gap-3 pt-3 border-t border-gray-800">
+          <Button variant="outline" size="sm" onClick={onClose} className="w-full sm:w-auto">
             Close
           </Button>
           <Button
@@ -212,6 +212,7 @@ export function AlertDetailsModal({ alert, onClose }: AlertDetailsModalProps) {
             loading={isSimulating}
             disabled={!hasValidIp}
             onClick={handleSimulateMitigation}
+            className="w-full sm:w-auto"
           >
             <Shield className="w-3.5 h-3.5" />
             Trigger Shield Protection

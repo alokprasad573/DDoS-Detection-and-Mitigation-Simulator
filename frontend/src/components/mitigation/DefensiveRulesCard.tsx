@@ -133,19 +133,19 @@ export function DefensiveRulesCard() {
       <CardContent>
         <div className="space-y-4">
           {/* Actions Bar */}
-          <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-gray-800">
-            <form onSubmit={handleCreateRule} className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-gray-800">
+            <form onSubmit={handleCreateRule} className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
               <input
                 type="text"
                 placeholder="e.g. 198.51.100.0/24"
                 value={newTarget}
                 onChange={(e) => setNewTarget(e.target.value)}
-                className="bg-[#090D16] border border-gray-700/60 rounded px-2.5 py-1 text-xs font-mono text-gray-200 placeholder-gray-500 focus:border-[#00FF9D] focus:outline-none"
+                className="bg-[#090D16] border border-gray-700/60 rounded px-2.5 py-1 text-xs font-mono text-gray-200 placeholder-gray-500 focus:border-[#00FF9D] focus:outline-none flex-1 sm:w-44"
               />
               <select
                 value={newAction}
                 onChange={(e) => setNewAction(e.target.value as "BLOCK" | "RATE_LIMIT")}
-                className="bg-[#090D16] border border-gray-700/60 rounded px-2 py-1 text-xs font-mono text-gray-200 focus:border-[#00FF9D] focus:outline-none"
+                className="bg-[#090D16] border border-gray-700/60 rounded px-2 py-1 text-xs font-mono text-gray-200 focus:border-[#00FF9D] focus:outline-none w-full sm:w-auto"
               >
                 <option value="RATE_LIMIT">Rate Limit (10 r/s)</option>
                 <option value="BLOCK">Block IP</option>
@@ -155,7 +155,7 @@ export function DefensiveRulesCard() {
                 size="sm"
                 variant="outline"
                 disabled={isSubmitting || !newTarget.trim()}
-                className="text-xs"
+                className="text-xs w-full sm:w-auto justify-center"
               >
                 <Shield className="w-3.5 h-3.5 mr-1 text-[#00FF9D]" />
                 Propose Dry-Run
@@ -163,12 +163,12 @@ export function DefensiveRulesCard() {
             </form>
 
             {/* Export Buttons */}
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto justify-start sm:justify-end">
               <Button
                 size="sm"
                 variant="outline"
                 onClick={handleExportNginx}
-                className="text-xs font-mono"
+                className="text-xs font-mono flex-1 sm:flex-initial justify-center"
               >
                 <Download className="w-3.5 h-3.5 mr-1 text-[#00FF9D]" />
                 Export Nginx
@@ -177,7 +177,7 @@ export function DefensiveRulesCard() {
                 size="sm"
                 variant="outline"
                 onClick={handleExportCaddy}
-                className="text-xs font-mono"
+                className="text-xs font-mono flex-1 sm:flex-initial justify-center"
               >
                 <Download className="w-3.5 h-3.5 mr-1 text-[#06B6D4]" />
                 Export Caddyfile
@@ -199,8 +199,8 @@ export function DefensiveRulesCard() {
             </p>
           ) : (
             <div className="space-y-3">
-              <div className="overflow-x-auto">
-              <table className="w-full text-left font-mono text-xs">
+              <div className="overflow-x-auto -webkit-overflow-scrolling-touch">
+              <table className="w-full min-w-155 text-left font-mono text-xs">
                 <thead className="bg-[#111827]/70 text-gray-400 uppercase text-[10px]">
                   <tr>
                     <th className="py-2 px-3">Rule ID</th>

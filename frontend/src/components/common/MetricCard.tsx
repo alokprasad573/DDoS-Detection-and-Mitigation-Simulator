@@ -46,15 +46,15 @@ export function MetricCard({
         </div>
       </CardHeader>
       <CardContent>
-        <div className="flex items-baseline justify-between gap-2">
-          <div className="text-2xl font-mono font-bold tracking-tight text-white">
+        <div className="flex flex-wrap items-baseline justify-between gap-2">
+          <div className="text-xl sm:text-2xl font-mono font-bold tracking-tight text-white wrap-break-word min-w-0">
             {typeof value === "number" ? value.toLocaleString() : value}{" "}
             {unit && <span className="text-xs text-gray-400 font-normal">{unit}</span>}
           </div>
-          {badge}
+          {badge && <div className="shrink-0">{badge}</div>}
         </div>
         {subtitle && (
-          <p className="text-[11px] font-mono text-gray-400 mt-1 leading-snug">{subtitle}</p>
+          <p className="text-[11px] font-mono text-gray-400 mt-1 leading-snug wrap-break-word">{subtitle}</p>
         )}
       </CardContent>
     </Card>

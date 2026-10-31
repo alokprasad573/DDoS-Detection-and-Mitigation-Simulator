@@ -41,8 +41,8 @@ export function SimulationLiveChart({ ticks }: SimulationLiveChartProps) {
   }));
 
   return (
-    <div className="h-72 w-full font-mono">
-      <ResponsiveContainer width="100%" height="100%">
+    <div className="h-56 sm:h-72 w-full min-w-0 font-mono">
+      <ResponsiveContainer width="100%" height="100%" minWidth={0}>
         <AreaChart data={displayTicks} margin={{ top: 10, right: 10, left: -15, bottom: 0 }}>
           <defs>
             <linearGradient id="attackGradient" x1="0" y1="0" x2="0" y2="1">

@@ -48,8 +48,8 @@ export function SimulatorHistoryTable({
         <span className="text-xs text-gray-400 font-mono">No simulation runs recorded yet.</span>
       ) : (
         <div className="space-y-3">
-          <div className="overflow-x-auto rounded-lg border border-gray-700/60 bg-[#090D16]">
-          <table className="w-full text-left text-xs font-mono" aria-label="Previous Simulation Runs">
+          <div className="overflow-x-auto rounded-lg border border-gray-700/60 bg-[#090D16] -webkit-overflow-scrolling-touch">
+          <table className="w-full min-w-125 text-left text-xs font-mono" aria-label="Previous Simulation Runs">
             <thead>
               <tr className="text-gray-400 border-b border-gray-800 bg-[#1F2937]/50 text-[11px] uppercase">
                 <th scope="col" className="py-2.5 px-3">Run ID</th>

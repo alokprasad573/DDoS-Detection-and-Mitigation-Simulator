@@ -43,11 +43,11 @@ export function SimulatorScorecard({
         </Badge>
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs font-mono">
+      <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3 text-xs font-mono">
         {/* 1. Detection Time */}
-        <div className="p-3 rounded-lg bg-[#090D16] border border-gray-800">
+        <div className="p-2.5 sm:p-3 rounded-lg bg-[#090D16] border border-gray-800">
           <span className="text-gray-400 block text-[10px]">How Fast AI Detected:</span>
-          <strong className="text-gray-100 text-sm mt-0.5 block">
+          <strong className="text-gray-100 text-xs sm:text-sm mt-0.5 block wrap-break-word">
             {scorecard?.time_to_detect_seconds !== null && scorecard?.time_to_detect_seconds !== undefined
               ? `${scorecard.time_to_detect_seconds}s`
               : aiTimeToDetectSeconds !== null
@@ -57,9 +57,9 @@ export function SimulatorScorecard({
         </div>
 
         {/* 2. Mitigation Time */}
-        <div className="p-3 rounded-lg bg-[#090D16] border border-gray-800">
+        <div className="p-2.5 sm:p-3 rounded-lg bg-[#090D16] border border-gray-800">
           <span className="text-gray-400 block text-[10px]">How Fast Shield Blocked:</span>
-          <strong className="text-[#06B6D4] text-sm mt-0.5 block">
+          <strong className="text-[#06B6D4] text-xs sm:text-sm mt-0.5 block wrap-break-word">
             {scorecard?.time_to_mitigate_seconds !== null && scorecard?.time_to_mitigate_seconds !== undefined
               ? `${scorecard.time_to_mitigate_seconds}s`
               : aiTimeToMitigateSeconds !== null
@@ -69,9 +69,9 @@ export function SimulatorScorecard({
         </div>
 
         {/* 3. Attack Stopped */}
-        <div className="p-3 rounded-lg bg-[#090D16] border border-gray-800">
+        <div className="p-2.5 sm:p-3 rounded-lg bg-[#090D16] border border-gray-800">
           <span className="text-gray-400 block text-[10px]">Attack Traffic Stopped:</span>
-          <strong className="text-[#00FF9D] text-sm mt-0.5 block">
+          <strong className="text-[#00FF9D] text-xs sm:text-sm mt-0.5 block wrap-break-word">
             {scorecard?.attack_traffic_blocked_pct !== null && scorecard?.attack_traffic_blocked_pct !== undefined
               ? `${scorecard.attack_traffic_blocked_pct}%`
               : liveBlockedPct !== null
@@ -81,9 +81,9 @@ export function SimulatorScorecard({
         </div>
 
         {/* 4. Benign Saved */}
-        <div className="p-3 rounded-lg bg-[#090D16] border border-gray-800">
+        <div className="p-2.5 sm:p-3 rounded-lg bg-[#090D16] border border-gray-800">
           <span className="text-gray-400 block text-[10px]">Safe Real Visitors Saved:</span>
-          <strong className="text-[#10B981] text-sm mt-0.5 block">
+          <strong className="text-[#10B981] text-xs sm:text-sm mt-0.5 block wrap-break-word">
             {scorecard?.collateral_legitimate_pct !== null && scorecard?.collateral_legitimate_pct !== undefined
               ? `${(100 - scorecard.collateral_legitimate_pct).toFixed(1)}%`
               : totalOfferedLegit > 0
@@ -93,17 +93,17 @@ export function SimulatorScorecard({
         </div>
 
         {/* 5. Downtime */}
-        <div className="p-3 rounded-lg bg-[#090D16] border border-gray-800">
+        <div className="p-2.5 sm:p-3 rounded-lg bg-[#090D16] border border-gray-800">
           <span className="text-gray-400 block text-[10px]">Website Downtime:</span>
-          <strong className="text-[#EF4444] text-sm mt-0.5 block">
+          <strong className="text-[#EF4444] text-xs sm:text-sm mt-0.5 block wrap-break-word">
             {scorecard?.downtime_seconds ?? recentTicks.filter((t) => t.availability_pct < 80).length}s (Zero Crash)
           </strong>
         </div>
 
         {/* 6. Precision */}
-        <div className="p-3 rounded-lg bg-[#090D16] border border-gray-800">
+        <div className="p-2.5 sm:p-3 rounded-lg bg-[#090D16] border border-gray-800">
           <span className="text-gray-400 block text-[10px]">AI Accuracy (Precision):</span>
-          <strong className="text-[#00FF9D] text-sm mt-0.5 block">
+          <strong className="text-[#00FF9D] text-xs sm:text-sm mt-0.5 block wrap-break-word">
             {scorecard?.precision !== null && scorecard?.precision !== undefined
               ? `${Math.round(scorecard.precision * 100)}%`
               : "100%"}
@@ -111,9 +111,9 @@ export function SimulatorScorecard({
         </div>
 
         {/* 7. Recall */}
-        <div className="p-3 rounded-lg bg-[#090D16] border border-gray-800">
+        <div className="p-2.5 sm:p-3 rounded-lg bg-[#090D16] border border-gray-800">
           <span className="text-gray-400 block text-[10px]">Threat Catch Rate (Recall):</span>
-          <strong className="text-[#00FF9D] text-sm mt-0.5 block">
+          <strong className="text-[#00FF9D] text-xs sm:text-sm mt-0.5 block wrap-break-word">
             {scorecard?.recall !== null && scorecard?.recall !== undefined
               ? `${Math.round(scorecard.recall * 100)}%`
               : "100%"}
@@ -121,9 +121,9 @@ export function SimulatorScorecard({
         </div>
 
         {/* 8. False Positive */}
-        <div className="p-3 rounded-lg bg-[#090D16] border border-gray-800">
+        <div className="p-2.5 sm:p-3 rounded-lg bg-[#090D16] border border-gray-800">
           <span className="text-gray-400 block text-[10px]">Mistakes On Real Users:</span>
-          <strong className="text-[#10B981] text-sm mt-0.5 block">
+          <strong className="text-[#10B981] text-xs sm:text-sm mt-0.5 block wrap-break-word">
             {scorecard?.false_positive_rate !== null && scorecard?.false_positive_rate !== undefined
               ? `${(scorecard.false_positive_rate * 100).toFixed(1)}% (Near Zero)`
               : "0.0%"}

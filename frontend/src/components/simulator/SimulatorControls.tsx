@@ -55,14 +55,14 @@ export function SimulatorControls({
               ● {activeRun.status}
             </span>
           </div>
-          <div className="text-xs text-gray-400 font-mono mt-0.5">
+          <div className="text-xs text-gray-400 font-mono mt-0.5 wrap-break-word">
             Attack: <strong className="text-gray-100">{activeRun.scenario_type}</strong> · Speed:{" "}
             <strong>{activeRun.speed_multiplier}x</strong> · Seed: {activeRun.seed}
           </div>
         </div>
 
         {/* Action Buttons Toolbar */}
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
           {/* Start / Resume */}
           {activeRun.status !== "running" &&
             activeRun.status !== "completed" &&
